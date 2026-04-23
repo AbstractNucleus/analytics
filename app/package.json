@@ -1,0 +1,35 @@
+{
+  "name": "analytics-frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "packageManager": "pnpm@10.33.2",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "capture-fixtures": "tsx scripts/capture-fixtures.ts"
+  },
+  "dependencies": {
+    "@sveltejs/adapter-node": "^5.2.12",
+    "@sveltejs/kit": "^2.15.2",
+    "pocketbase": "^0.25.1",
+    "svelte": "^5.16.0",
+    "uplot": "^1.6.31"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^5.0.3",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/svelte": "^5.2.6",
+    "@vitest/ui": "^3.2.4",
+    "jsdom": "^25.0.1",
+    "svelte-check": "^4.1.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.7",
+    "vitest": "^3.2.4"
+  }
+}
