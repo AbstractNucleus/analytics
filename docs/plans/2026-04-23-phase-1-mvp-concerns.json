@@ -1,0 +1,396 @@
+{
+  "feature_slug": "phase-1-mvp",
+  "default_branch": "main",
+  "concerns": [
+    {
+      "slug": "foundation",
+      "branch": "feat/phase-1-mvp-foundation",
+      "deps": [],
+      "tasks": [
+        {
+          "id": "t1",
+          "desc": "Add app/src/smoke.test.ts asserting 1+1===2; confirm pnpm -C app test fails (no package.json yet).",
+          "tests_first": true,
+          "acceptance": "pnpm -C app test exits non-zero with a missing-package.json-style error."
+        },
+        {
+          "id": "t2",
+          "desc": "Write app/package.json declaring every feature dep upfront (svelte, @sveltejs/kit, @sveltejs/adapter-node, @sveltejs/vite-plugin-svelte, vite, typescript, tsx, vitest, @vitest/ui, jsdom, @testing-library/svelte, @testing-library/jest-dom, pocketbase, uplot, typings). Set packageManager to a pinned pnpm. Add scripts: dev, build, preview, test, test:watch, check, capture-fixtures. Run pnpm install and commit pnpm-lock.yaml.",
+          "tests_first": false,
+          "acceptance": "pnpm -C app install completes cleanly and app/pnpm-lock.yaml is written."
+        },
+        {
+          "id": "t3",
+          "desc": "Write app/tsconfig.json (strict, moduleResolution bundler, $lib alias), app/svelte.config.js (adapter-node), app/vite.config.ts (svelte plugin + vitest jsdom config), app/vitest.config.ts if kept separate.",
+          "tests_first": false,
+          "acceptance": "pnpm -C app test now passes the smoke test."
+        },
+        {
+          "id": "t4",
+          "desc": "Write app/src/app.html (html skeleton with data-theme attribute + <link rel=preload> for Roboto Mono woff2 paths) and app/src/app.d.ts (standard SvelteKit ambient types).",
+          "tests_first": false,
+          "acceptance": "pnpm -C app check exits 0."
+        },
+        {
+          "id": "t5",
+          "desc": "Write app/.gitignore (node_modules, .svelte-kit, build, coverage) and app/.npmrc (engine-strict=true, auto-install-peers=true). Update root .gitignore to add .env and any missing entries.",
+          "tests_first": false,
+          "acceptance": "git status shows node_modules and .svelte-kit ignored after running pnpm install."
+        },
+        {
+          "id": "t6",
+          "desc": "Move or keep the smoke test at app/src/smoke.test.ts so it does not pollute any lib module folder owned by a downstream concern. Confirm it still passes.",
+          "tests_first": false,
+          "acceptance": "pnpm -C app test passes; the only file under app/src/ not owned by foundation is the smoke test at the top level."
+        }
+      ],
+      "pr_title": "chore(foundation): scaffold SvelteKit app and repo-wide ignores"
+    },
+    {
+      "slug": "design-system",
+      "branch": "feat/phase-1-mvp-design-system",
+      "deps": ["foundation"],
+      "tasks": [
+        {
+          "id": "t1",
+          "desc": "Write app/src/lib/design/theme.test.ts with three failing tests: default theme follows prefers-color-scheme when localStorage empty; setTheme('light') writes data-theme attribute and persists; reload honors persisted choice.",
+          "tests_first": true,
+          "acceptance": "pnpm -C app test shows three red theme tests."
+        },
+        {
+          "id": "t2",
+          "desc": "Implement app/src/lib/design/theme.ts exporting a Svelte store plus setTheme(value) that reads/writes localStorage and sets document.documentElement dataset.theme. Use matchMedia for the initial default.",
+          "tests_first": false,
+          "acceptance": "All three theme tests pass."
+        },
+        {
+          "id": "t3",
+          "desc": "Write app/src/lib/design/tokens.css defining CSS custom properties for the two surfaces (--bg, --sub-alt), three text weights, accent, focus-ring; motion tokens (125ms, 400ms spring, 1.2s pulse). Dark palette on [data-theme='dark'], light on [data-theme='light'].",
+          "tests_first": false,
+          "acceptance": "File parses as valid CSS (svelte-check reports no errors referencing it)."
+        },
+        {
+          "id": "t4",
+          "desc": "Write app/src/lib/design/fonts.css with @font-face declarations for Roboto Mono weights 400, 500, 700 pointing at /fonts/RobotoMono-{Regular,Medium,Bold}.woff2; include font-feature-settings for tabular figures.",
+          "tests_first": false,
+          "acceptance": "File parses as valid CSS; paths match files created in t5."
+        },
+        {
+          "id": "t5",
+          "desc": "Download self-hosted Roboto Mono woff2 files from the pinned Roboto Mono release and place them at app/static/fonts/RobotoMono-Regular.woff2, RobotoMono-Medium.woff2, RobotoMono-Bold.woff2.",
+          "tests_first": false,
+          "acceptance": "ls app/static/fonts/ shows the three woff2 files, each > 0 bytes."
+        },
+        {
+          "id": "t6",
+          "desc": "Write app/src/lib/design/index.ts re-exporting the theme store and setTheme, plus side-effect imports of tokens.css and fonts.css so any consumer of $lib/design gets the bundled styles.",
+          "tests_first": false,
+          "acceptance": "pnpm -C app test passes; pnpm -C app check passes."
+        }
+      ],
+      "pr_title": "feat(design): AbstractNucleus tokens, Roboto Mono, theme store"
+    },
+    {
+      "slug": "format-utils",
+      "branch": "feat/phase-1-mvp-format-utils",
+      "deps": ["foundation"],
+      "tasks": [
+        {
+          "id": "t1",
+          "desc": "Write app/src/lib/format/number.test.ts covering formatThousands with 0, 9, 999, 1 000, 128 430 (U+2009 thin space), negative, and decimal inputs.",
+          "tests_first": true,
+          "acceptance": "pnpm -C app test shows formatThousands tests red."
+        },
+        {
+          "id": "t2",
+          "desc": "Implement app/src/lib/format/number.ts exporting formatThousands, formatPercent(n, decimals), and formatTabular(n, opts). Use U+2009 for thousands grouping.",
+          "tests_first": false,
+          "acceptance": "All number tests green."
+        },
+        {
+          "id": "t3",
+          "desc": "Expand number.test.ts to cover formatPercent and formatTabular edge cases (0, boundaries, NaN, Infinity); ensure impl handles them deterministically.",
+          "tests_first": true,
+          "acceptance": "All number tests green."
+        },
+        {
+          "id": "t4",
+          "desc": "Write app/src/lib/format/bytes.test.ts covering formatByteRate thresholds (B/s, KB/s, MB/s, GB/s) with decimal rules locked explicitly (e.g. 1234567 -> '1.23 MB/s'). Implement app/src/lib/format/bytes.ts.",
+          "tests_first": true,
+          "acceptance": "formatByteRate tests green."
+        },
+        {
+          "id": "t5",
+          "desc": "Write app/src/lib/format/time.test.ts covering formatRelativeTime (3s, 2m, 14h ago) with injectable now argument for determinism; implement app/src/lib/format/time.ts.",
+          "tests_first": true,
+          "acceptance": "formatRelativeTime tests green."
+        },
+        {
+          "id": "t6",
+          "desc": "Extend time.test.ts with formatUptime cases (14d 03h, 0d 00h, pluralization); implement formatUptime in time.ts.",
+          "tests_first": true,
+          "acceptance": "formatUptime tests green."
+        },
+        {
+          "id": "t7",
+          "desc": "Write app/src/lib/format/index.ts barrel re-exporting all format helpers.",
+          "tests_first": false,
+          "acceptance": "pnpm -C app test passes; pnpm -C app check passes."
+        }
+      ],
+      "pr_title": "feat(format): tabular numbers, byte rates, relative time"
+    },
+    {
+      "slug": "chart-wrapper",
+      "branch": "feat/phase-1-mvp-chart-wrapper",
+      "deps": ["foundation"],
+      "tasks": [
+        {
+          "id": "t1",
+          "desc": "Write app/src/lib/chart/timeRange.test.ts covering timeRangeWindow('1h'|'24h'|'7d'|'30d', now) returning {startMs, endMs, bucketMs} with correct spans and monotonic bucket sizes.",
+          "tests_first": true,
+          "acceptance": "timeRange tests red."
+        },
+        {
+          "id": "t2",
+          "desc": "Implement app/src/lib/chart/timeRange.ts.",
+          "tests_first": false,
+          "acceptance": "timeRange tests green."
+        },
+        {
+          "id": "t3",
+          "desc": "Write app/src/lib/chart/tween.test.ts asserting monotonic approach from 'from' to 'to' and that final value equals 'to' at duration end.",
+          "tests_first": true,
+          "acceptance": "tween tests red."
+        },
+        {
+          "id": "t4",
+          "desc": "Implement app/src/lib/chart/tween.ts exporting tweenNumber(from, to, duration=400, easing=spring) as a readable store. Include a local polyfill import for rAF if needed by jsdom.",
+          "tests_first": false,
+          "acceptance": "tween tests green."
+        },
+        {
+          "id": "t5",
+          "desc": "Write app/src/lib/chart/TimeSeries.test.ts using vi.mock('uplot', ...) and @testing-library/svelte. Assert uPlot constructor is called with expected opts.series shape and setData is called on data prop change.",
+          "tests_first": true,
+          "acceptance": "TimeSeries tests red."
+        },
+        {
+          "id": "t6",
+          "desc": "Implement app/src/lib/chart/TimeSeries.svelte wrapping uPlot. Handle mount, destroy, and reactive setData on data prop changes. Accept formatX, formatY callbacks, series, height.",
+          "tests_first": false,
+          "acceptance": "TimeSeries tests green."
+        },
+        {
+          "id": "t7",
+          "desc": "Write app/src/lib/chart/index.ts barrel re-exporting TimeSeries, tweenNumber, and timeRangeWindow.",
+          "tests_first": false,
+          "acceptance": "pnpm -C app test passes; pnpm -C app check passes."
+        }
+      ],
+      "pr_title": "feat(chart): uPlot wrapper, tween utility, time-range math"
+    },
+    {
+      "slug": "beszel-client",
+      "branch": "feat/phase-1-mvp-beszel-client",
+      "deps": ["foundation"],
+      "tasks": [
+        {
+          "id": "t1",
+          "desc": "Write app/scripts/capture-fixtures.ts as a tsx script that reads BESZEL_URL and optional BESZEL_API_TOKEN, hits systems list, a system_stats page, a containers list, and one realtime event, and writes JSON to app/tests/fixtures/{systems,system_stats,containers,realtime-event}.json. Document at top: how to run against a local dev Beszel hub; if the hub is unreachable, script fails loudly rather than writing placeholders.",
+          "tests_first": false,
+          "acceptance": "pnpm -C app capture-fixtures runs against a local Beszel hub and writes four JSON files. If no hub is available, the executor stands up a short-lived dev hub for this step only."
+        },
+        {
+          "id": "t2",
+          "desc": "Run capture-fixtures.ts against a local Beszel hub and commit the resulting fixture JSON files.",
+          "tests_first": false,
+          "acceptance": "app/tests/fixtures/ contains four non-empty realistic JSON files."
+        },
+        {
+          "id": "t3",
+          "desc": "Write app/src/lib/beszel/parse.test.ts asserting parseSystem, parseStatsSample, parseContainer return typed models with expected field mappings against the captured fixtures.",
+          "tests_first": true,
+          "acceptance": "parse tests red."
+        },
+        {
+          "id": "t4",
+          "desc": "Write app/src/lib/beszel/types.ts defining SystemRow, StatsSample, ContainerRow, HostSlug, Unsubscribe. Write app/src/lib/beszel/parse.ts implementing the parse functions.",
+          "tests_first": false,
+          "acceptance": "parse tests green."
+        },
+        {
+          "id": "t5",
+          "desc": "Write app/src/lib/beszel/client.test.ts using vi.mock('pocketbase', ...) to stub the SDK. Assert createClient returns listSystems, getSystem, getRecentStats, subscribeStats, subscribeFleet; each calls the right PocketBase collection method and passes parsed results through parse.ts.",
+          "tests_first": true,
+          "acceptance": "client tests red."
+        },
+        {
+          "id": "t6",
+          "desc": "Implement app/src/lib/beszel/client.ts. Keep pocketbase import inside this file so the module boundary holds.",
+          "tests_first": false,
+          "acceptance": "client tests green."
+        },
+        {
+          "id": "t7",
+          "desc": "Write app/src/lib/beszel/index.ts barrel re-exporting types, createClient, and the BeszelClient interface.",
+          "tests_first": false,
+          "acceptance": "pnpm -C app test passes; pnpm -C app check passes."
+        }
+      ],
+      "pr_title": "feat(beszel): typed PocketBase client, fixtures, and capture script"
+    },
+    {
+      "slug": "panels-and-routes",
+      "branch": "feat/phase-1-mvp-panels-and-routes",
+      "deps": ["foundation", "design-system", "format-utils", "chart-wrapper", "beszel-client"],
+      "tasks": [
+        {
+          "id": "t1",
+          "desc": "Write app/src/lib/panels/timeRangeStore.test.ts asserting default is '24h' and setRange('7d') updates subscribers.",
+          "tests_first": true,
+          "acceptance": "timeRangeStore tests red."
+        },
+        {
+          "id": "t2",
+          "desc": "Implement app/src/lib/panels/timeRangeStore.ts as a Svelte writable store exposing range + setRange with typed allowed values.",
+          "tests_first": false,
+          "acceptance": "timeRangeStore tests green."
+        },
+        {
+          "id": "t3",
+          "desc": "For each panel (CpuPanel, MemoryPanel, DiskPanel, NetworkPanel, TempsPanel, UptimeKernel, HostHeader, FleetRow, TimeRangeToggle), write a .test.ts first using @testing-library/svelte + fixture data from app/tests/fixtures/. Assert expected readouts render with correct formatting (thin-space thousands, tabular percent, relative time) and that chart-using panels invoke the mocked uPlot constructor with the expected series shape.",
+          "tests_first": true,
+          "acceptance": "All panel tests red in one sweep before implementation."
+        },
+        {
+          "id": "t4",
+          "desc": "Implement each panel Svelte component under app/src/lib/panels/ in this order: CpuPanel, MemoryPanel, DiskPanel, NetworkPanel, TempsPanel, UptimeKernel, HostHeader, FleetRow, TimeRangeToggle. Each consumes format-utils, chart-wrapper, design-system tokens as needed.",
+          "tests_first": false,
+          "acceptance": "All panel tests green."
+        },
+        {
+          "id": "t5",
+          "desc": "Write app/src/routes/+layout.svelte (imports $lib/design side-effects, renders TimeRangeToggle in header) and app/src/routes/+layout.server.ts (exposes PUBLIC_BESZEL_URL to the client).",
+          "tests_first": false,
+          "acceptance": "pnpm -C app check passes."
+        },
+        {
+          "id": "t6",
+          "desc": "Write app/src/routes/+page.server.ts calling beszelClient.listSystems() for SSR, and app/src/routes/+page.svelte rendering one <FleetRow> per host. Add a minimal integration test that renders +page.svelte with a fixture-backed load result.",
+          "tests_first": true,
+          "acceptance": "Fleet-view test green; pnpm -C app build produces a valid adapter-node output."
+        },
+        {
+          "id": "t7",
+          "desc": "Write app/src/routes/hosts/[slug]/+page.server.ts (calls getSystem + getRecentStats(slug, 24h)) and app/src/routes/hosts/[slug]/+page.svelte (stacks header + all panels). Add a minimal integration test rendering the per-host page against a fixture.",
+          "tests_first": true,
+          "acceptance": "Per-host test green."
+        },
+        {
+          "id": "t8",
+          "desc": "Write app/src/lib/panels/index.ts barrel re-exporting every panel component and the timeRangeStore.",
+          "tests_first": false,
+          "acceptance": "pnpm -C app test passes; pnpm -C app check passes; pnpm -C app build exits 0."
+        }
+      ],
+      "pr_title": "feat(panels): fleet view, per-host panels, and routes"
+    },
+    {
+      "slug": "deploy-stack",
+      "branch": "feat/phase-1-mvp-deploy-stack",
+      "deps": ["foundation", "panels-and-routes"],
+      "tasks": [
+        {
+          "id": "t1",
+          "desc": "Write app/Dockerfile as a multi-stage build: deps stage (pnpm install --frozen-lockfile), build stage (pnpm build), runtime stage (node + the adapter-node output only). Write app/.dockerignore excluding node_modules, .svelte-kit, build, tests, fixtures.",
+          "tests_first": false,
+          "acceptance": "docker build -t analytics-frontend app/ succeeds locally."
+        },
+        {
+          "id": "t2",
+          "desc": "Write deploy/docker-compose.yml with services: beszel-hub (henrygd/beszel:${BESZEL_VERSION}, volume hub-data), beszel-agent (henrygd/beszel-agent:${BESZEL_VERSION}, pid host, network host, mounts /:/hostfs:ro and /var/run/docker.sock:ro, env HUB_URL and KEY), frontend (build ../app, internal only, env PUBLIC_BESZEL_URL and BESZEL_API_TOKEN), caddy (caddy:2 with caddy-dns/cloudflare plugin image, ports 443 bound to ${TS_IP}, volumes caddy-data/caddy-config, mounts ./Caddyfile).",
+          "tests_first": false,
+          "acceptance": "docker compose -f deploy/docker-compose.yml config exits 0."
+        },
+        {
+          "id": "t3",
+          "desc": "Write deploy/Caddyfile for analytics.noelkleen.com: tls with cloudflare DNS-01 using ${env.CLOUDFLARE_API_TOKEN}, bind ${env.TS_IP}, reverse_proxy to frontend:3000.",
+          "tests_first": false,
+          "acceptance": "Caddy validates the config via docker run --rm caddy:2 caddy validate --config /etc/caddy/Caddyfile against the mounted file (plugin may warn about missing env; syntax must be clean)."
+        },
+        {
+          "id": "t4",
+          "desc": "Write deploy/docker-compose.override.yml swapping the frontend service for a Vite dev server that bind-mounts ../app and listens on 5173. Keep hub and agent identical to prod.",
+          "tests_first": false,
+          "acceptance": "docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.override.yml config exits 0."
+        },
+        {
+          "id": "t5",
+          "desc": "Write deploy/.env.example listing every variable referenced in compose or Caddyfile: BESZEL_VERSION, BESZEL_AGENT_KEY, BESZEL_API_TOKEN, PUBLIC_BESZEL_URL, CLOUDFLARE_API_TOKEN, TS_IP. Each with a comment explaining its value.",
+          "tests_first": false,
+          "acceptance": "grep-verify every ${VAR} in compose and Caddyfile has a corresponding entry in .env.example."
+        },
+        {
+          "id": "t6",
+          "desc": "Local smoke bring-up: cp deploy/.env.example deploy/.env, fill dummy values, docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.override.yml up -d beszel-hub frontend. Confirm http://localhost:5173 serves the dashboard. Tear down.",
+          "tests_first": false,
+          "acceptance": "Curl to localhost:5173 returns HTML containing a known string from the fleet view layout."
+        }
+      ],
+      "pr_title": "feat(deploy): docker-compose stack, Caddy, and app Dockerfile"
+    },
+    {
+      "slug": "agent-install",
+      "branch": "feat/phase-1-mvp-agent-install",
+      "deps": [],
+      "tasks": [
+        {
+          "id": "t1",
+          "desc": "Write deploy/agent-install/linux-systemd.sh. Parses --hub and --key (required); detects arch via uname -m mapping to amd64/arm64; downloads beszel-agent binary for a pinned Beszel version from the official GitHub release; installs to /usr/local/bin/beszel-agent mode 755; writes /etc/systemd/system/beszel-agent.service with args baked in; runs systemctl daemon-reload and enable --now; prints systemctl status pointer. Must not assume apt/pacman availability.",
+          "tests_first": false,
+          "acceptance": "bash -n deploy/agent-install/linux-systemd.sh exits 0; running with no args exits non-zero with a usage message; running with --help exits 0."
+        },
+        {
+          "id": "t2",
+          "desc": "Write deploy/agent-install/windows-install.ps1. Parses --hub and --key; downloads Windows binary for the same pinned Beszel version; installs to 'C:\\Program Files\\Beszel\\beszel-agent.exe'; registers as a Windows service per Beszel's pinned-version instructions (sc.exe); starts the service.",
+          "tests_first": false,
+          "acceptance": "pwsh -NoProfile -Command Get-Command -Syntax on the script parses cleanly; running with -Help exits 0."
+        },
+        {
+          "id": "t3",
+          "desc": "Pin the Beszel version at the top of each script as a single variable (BESZEL_VERSION). Document at the top of each file how to bump it.",
+          "tests_first": false,
+          "acceptance": "The pinned version is identical in both scripts and matches the value in deploy/.env.example (cross-check by eye at PR review time; no automated check)."
+        }
+      ],
+      "pr_title": "feat(agent-install): linux-systemd and windows one-liner scripts"
+    },
+    {
+      "slug": "docs-polish",
+      "branch": "feat/phase-1-mvp-docs-polish",
+      "deps": ["foundation", "design-system", "format-utils", "chart-wrapper", "beszel-client", "panels-and-routes", "deploy-stack", "agent-install"],
+      "tasks": [
+        {
+          "id": "t1",
+          "desc": "Rewrite README.md with sections: what this is, architecture ASCII diagram, prereqs (Tailscale, Cloudflare API token, DNS A record gray-cloud, Docker), first-time setup on bserver (clone, cp .env.example .env, docker compose up -d), register bserver agent in Beszel admin UI, install agents on other three hosts via one-liners, dev mode (override.yml + http://localhost:5173), running tests (pnpm -C app test), cross-links.",
+          "tests_first": false,
+          "acceptance": "README is committed; every shell command it lists has been copy-pasted into a fresh shell by the executor and verified at least as far as exit code (commands requiring Cloudflare/Tailscale state are proofread only)."
+        },
+        {
+          "id": "t2",
+          "desc": "Add cross-links to docs/decisions.md, docs/research/README.md, docs/specs/2026-04-23-phase-1-mvp-design.md, docs/plans/2026-04-23-phase-1-mvp-plan.md.",
+          "tests_first": false,
+          "acceptance": "Markdown preview shows working relative links."
+        },
+        {
+          "id": "t3",
+          "desc": "Proof pass: no orphaned scaffolding references, no dead-end 'TODO' pointers, spec's acceptance checklist (items 1-8) is reproducible by a reader of the README alone.",
+          "tests_first": false,
+          "acceptance": "A second reader can follow the README end-to-end without cross-referencing the spec."
+        }
+      ],
+      "pr_title": "docs: quickstart README for phase 1 MVP"
+    }
+  ]
+}
