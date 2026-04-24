@@ -1,0 +1,93 @@
+{
+  "page": 1,
+  "perPage": 20,
+  "totalItems": 5,
+  "totalPages": 1,
+  "items": [
+    {
+      "id": "stat001aaaaaaaa",
+      "collectionId": "juohu4hhb4yzg51",
+      "collectionName": "system_stats",
+      "system": "abc123def456ghi",
+      "type": "1m",
+      "stats": {
+        "cpu": 23.5,
+        "mem": 48.2,
+        "disk": 42.5,
+        "nr": 1048576,
+        "ns": 524288,
+        "t": { "coretemp_package_id_0": 54.2, "nvme_composite": 41.0 }
+      },
+      "created": "2026-04-24 11:59:00.000Z",
+      "updated": "2026-04-24 11:59:00.000Z"
+    },
+    {
+      "id": "stat002bbbbbbbb",
+      "collectionId": "juohu4hhb4yzg51",
+      "collectionName": "system_stats",
+      "system": "abc123def456ghi",
+      "type": "1m",
+      "stats": {
+        "cpu": 31.2,
+        "mem": 49.1,
+        "disk": 42.5,
+        "nr": 2097152,
+        "ns": 786432,
+        "t": { "coretemp_package_id_0": 56.8, "nvme_composite": 42.5 }
+      },
+      "created": "2026-04-24 11:58:00.000Z",
+      "updated": "2026-04-24 11:58:00.000Z"
+    },
+    {
+      "id": "stat003ccccccccc",
+      "collectionId": "juohu4hhb4yzg51",
+      "collectionName": "system_stats",
+      "system": "abc123def456ghi",
+      "type": "1m",
+      "stats": {
+        "cpu": 18.7,
+        "mem": 47.8,
+        "disk": 42.5,
+        "nr": 524288,
+        "ns": 262144,
+        "t": { "coretemp_package_id_0": 51.0, "nvme_composite": 39.5 }
+      },
+      "created": "2026-04-24 11:57:00.000Z",
+      "updated": "2026-04-24 11:57:00.000Z"
+    },
+    {
+      "id": "stat004ddddddddd",
+      "collectionId": "juohu4hhb4yzg51",
+      "collectionName": "system_stats",
+      "system": "jkl456mno789pqr",
+      "type": "1m",
+      "stats": {
+        "cpu": 12.3,
+        "mem": 35.6,
+        "disk": 67.1,
+        "nr": 131072,
+        "ns": 65536,
+        "t": {}
+      },
+      "created": "2026-04-24 11:59:00.000Z",
+      "updated": "2026-04-24 11:59:00.000Z"
+    },
+    {
+      "id": "stat005eeeeeeeee",
+      "collectionId": "juohu4hhb4yzg51",
+      "collectionName": "system_stats",
+      "system": "jkl456mno789pqr",
+      "type": "1m",
+      "stats": {
+        "cpu": 15.9,
+        "mem": 36.1,
+        "disk": 67.1,
+        "nr": 196608,
+        "ns": 98304,
+        "t": {}
+      },
+      "created": "2026-04-24 11:58:00.000Z",
+      "updated": "2026-04-24 11:58:00.000Z"
+    }
+  ]
+}
