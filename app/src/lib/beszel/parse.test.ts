@@ -18,6 +18,7 @@ describe('parseSystem', () => {
       status: 'up',
       cpuCores: 8,
       memGb: 32,
+      diskTotalGb: 42.5,
       uptimeSeconds: 1209600,
       kernel: '6.8.0-52-generic',
       os: 'ubuntu 24.04',

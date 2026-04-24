@@ -11,6 +11,7 @@ export interface SystemRow {
   status: SystemStatus;
   cpuCores: number;
   memGb: number;
+  diskTotalGb: number;
   uptimeSeconds: number;
   kernel: string;
   os: string;
