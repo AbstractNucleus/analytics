@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatRelativeTime } from './time';
+import { formatRelativeTime, formatUptime } from './time';
 
 // A fixed "now" makes every assertion deterministic regardless of when the test runs.
 const NOW = 1_700_000_000_000;
@@ -80,5 +80,52 @@ describe('formatRelativeTime', () => {
   it('falls back to em dash for Infinity', () => {
     expect(formatRelativeTime(Number.POSITIVE_INFINITY, NOW)).toBe('—');
     expect(formatRelativeTime(Number.NEGATIVE_INFINITY, NOW)).toBe('—');
+  });
+});
+
+describe('formatUptime', () => {
+  it('renders zero seconds as "0d 00h"', () => {
+    expect(formatUptime(0)).toBe('0d 00h');
+  });
+
+  it('renders a sub-hour uptime as "0d 00h"', () => {
+    expect(formatUptime(59 * 60)).toBe('0d 00h');
+  });
+
+  it('zero-pads single-digit hours', () => {
+    expect(formatUptime(3 * 3600)).toBe('0d 03h');
+  });
+
+  it('renders the canonical 14d 03h example', () => {
+    expect(formatUptime(14 * 86400 + 3 * 3600)).toBe('14d 03h');
+  });
+
+  it('renders exactly one day as "1d 00h"', () => {
+    expect(formatUptime(86400)).toBe('1d 00h');
+  });
+
+  it('renders one day plus one hour as "1d 01h"', () => {
+    expect(formatUptime(86400 + 3600)).toBe('1d 01h');
+  });
+
+  it('does not zero-pad the day count for large uptimes', () => {
+    expect(formatUptime(365 * 86400 + 23 * 3600)).toBe('365d 23h');
+  });
+
+  it('truncates partial hours (does not round up)', () => {
+    expect(formatUptime(3 * 3600 + 59 * 60 + 59)).toBe('0d 03h');
+  });
+
+  it('falls back to em dash for NaN', () => {
+    expect(formatUptime(Number.NaN)).toBe('—');
+  });
+
+  it('falls back to em dash for Infinity', () => {
+    expect(formatUptime(Number.POSITIVE_INFINITY)).toBe('—');
+    expect(formatUptime(Number.NEGATIVE_INFINITY)).toBe('—');
+  });
+
+  it('falls back to em dash for negative seconds', () => {
+    expect(formatUptime(-1)).toBe('—');
   });
 });
