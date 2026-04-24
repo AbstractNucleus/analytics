@@ -27,6 +27,15 @@ import { writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import PocketBase from 'pocketbase';
+import { EventSource as EventSourcePolyfill } from 'eventsource';
+
+// pocketbase's RealtimeService uses `new EventSource(...)` against the global
+// constructor. Node doesn't expose EventSource unconditionally (stabilized in
+// v22.4 but still gated in some builds), so register the polyfill before any
+// subscribe() call. Harmless if a native one already exists.
+if (typeof (globalThis as { EventSource?: unknown }).EventSource === 'undefined') {
+  (globalThis as { EventSource?: unknown }).EventSource = EventSourcePolyfill;
+}
 
 const REALTIME_TIMEOUT_MS = 10_000;
 
