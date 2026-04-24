@@ -11,7 +11,7 @@ const SYSTEMS = systemsFixture.map(parseSystem);
 describe('fleet view (+page.svelte)', () => {
   it('renders one fleet row per host in the load result', () => {
     const { container } = render(Page, {
-      props: { data: { systems: SYSTEMS } }
+      props: { data: { systems: SYSTEMS, beszelUrl: undefined } }
     });
 
     const rows = container.querySelectorAll('.fleet-row');

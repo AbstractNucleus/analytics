@@ -36,7 +36,8 @@ describe('per-host view (hosts/[slug]/+page.svelte)', () => {
         data: {
           system: SYSTEM,
           samples: SAMPLES,
-          containers: CONTAINERS
+          containers: CONTAINERS,
+          beszelUrl: undefined
         }
       }
     });
