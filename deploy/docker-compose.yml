@@ -1,0 +1,67 @@
+# Analytics stack: Beszel hub + agent, SvelteKit frontend, Caddy.
+# Tailnet-only: Caddy binds 443 to ${TS_IP} (the host's Tailscale IP) and
+# obtains certs via Cloudflare DNS-01, so the stack is not reachable over
+# WAN even if DNS leaks. See docs/ for the tailnet-HTTPS pattern.
+
+services:
+  beszel-hub:
+    image: henrygd/beszel:${BESZEL_VERSION}
+    restart: unless-stopped
+    volumes:
+      - hub-data:/beszel_data
+    networks:
+      - internal
+
+  beszel-agent:
+    image: henrygd/beszel-agent:${BESZEL_VERSION}
+    restart: unless-stopped
+    # pid:host + network_mode:host so the agent sees real host-level process
+    # and network metrics instead of the container's namespaced view.
+    pid: host
+    network_mode: host
+    volumes:
+      - /:/hostfs:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      HUB_URL: "http://localhost:8090"
+      KEY: "${BESZEL_AGENT_KEY}"
+
+  frontend:
+    build:
+      context: ../app
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      PUBLIC_BESZEL_URL: "${PUBLIC_BESZEL_URL}"
+      BESZEL_API_TOKEN: "${BESZEL_API_TOKEN}"
+    networks:
+      - internal
+    depends_on:
+      - beszel-hub
+
+  caddy:
+    # iarekylew00t/caddy-cloudflare bundles Caddy v2 + caddy-dns/cloudflare.
+    # Pinned to a 2.x minor so ACME behavior stays stable across rebuilds.
+    image: iarekylew00t/caddy-cloudflare:2.8
+    restart: unless-stopped
+    ports:
+      - "${TS_IP}:443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    environment:
+      TS_IP: "${TS_IP}"
+      CLOUDFLARE_API_TOKEN: "${CLOUDFLARE_API_TOKEN}"
+    networks:
+      - internal
+    depends_on:
+      - frontend
+
+networks:
+  internal:
+
+volumes:
+  hub-data:
+  caddy-data:
+  caddy-config:
