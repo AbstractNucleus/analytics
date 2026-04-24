@@ -8,8 +8,8 @@
     'beszel-agent' via sc.exe with HUB_URL and KEY exposed as service environment
     variables, and starts the service.
 
-    Must be run from an elevated PowerShell (Administrator) session. Requires tar
-    (bundled with Windows 10 1803+) to unpack the release archive.
+    Must be run from an elevated PowerShell (Administrator) session. Uses the
+    built-in Expand-Archive cmdlet (PowerShell 5.0+) to unpack the release zip.
 
 .PARAMETER Hub
     URL or tcp://host:port of the Beszel hub. Passed to the agent as the HUB_URL
@@ -69,8 +69,8 @@ Required parameters:
 Options:
   -Help                Show this message and exit.
 
-Run from an elevated PowerShell (Administrator). Requires tar (ships with
-Windows 10 1803+).
+Run from an elevated PowerShell (Administrator). Uses Expand-Archive
+(built into PowerShell 5.0+).
 '@
     Write-Host $msg
 }
@@ -117,8 +117,8 @@ if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administra
     Die "must be run as Administrator (right-click PowerShell -> 'Run as Administrator')"
 }
 
-if (-not (Get-Command tar.exe -ErrorAction SilentlyContinue)) {
-    Die "tar is required but was not found in PATH (ships with Windows 10 1803+)"
+if (-not (Get-Command Expand-Archive -ErrorAction SilentlyContinue)) {
+    Die "Expand-Archive is required but was not found (ships with PowerShell 5.0+)"
 }
 
 # ---------------------------- arch detection --------------------------------
@@ -130,9 +130,9 @@ switch ($rawArch) {
 }
 
 # ---------------------------- download & install ----------------------------
-# Beszel ships the Windows agent as a .tar.gz (same naming convention as linux,
-# just s/linux/windows/). tar ships with Windows 10 1803+ so no extra deps.
-$asset = "beszel-agent_windows_${arch}.tar.gz"
+# Beszel ships the Windows agent as a .zip (verified against the v0.18.7
+# release: beszel-agent_windows_amd64.zip exists, the .tar.gz does not).
+$asset = "beszel-agent_windows_${arch}.zip"
 $url   = "https://github.com/henrygd/beszel/releases/download/v${BeszelVersion}/${asset}"
 
 $tmpDir = New-Item -ItemType Directory -Force -Path (Join-Path ([System.IO.Path]::GetTempPath()) ("beszel-install-" + [guid]::NewGuid()))
@@ -158,10 +158,7 @@ try {
     }
 
     Write-Host "Extracting $asset"
-    & tar.exe -xzf $archivePath -C $tmpDir
-    if ($LASTEXITCODE -ne 0) {
-        Die "failed to extract $asset (tar exit code $LASTEXITCODE)"
-    }
+    Expand-Archive -Path $archivePath -DestinationPath $tmpDir -Force
 
     $extractedExe = Join-Path $tmpDir 'beszel-agent.exe'
     if (-not (Test-Path $extractedExe)) {
