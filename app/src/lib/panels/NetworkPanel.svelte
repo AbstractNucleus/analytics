@@ -19,7 +19,7 @@
   }: Props = $props();
 
   const read = $derived(
-    currentReadBps ?? (samples.length > 0 ? samples[samples.length - 1].netReadBps : NaN)
+    currentReadBps ?? (samples.length > 0 ? samples[samples.length - 1].netRecvBps : NaN)
   );
   const sent = $derived(
     currentSentBps ?? (samples.length > 0 ? samples[samples.length - 1].netSentBps : NaN)
@@ -27,7 +27,7 @@
 
   const data = $derived<[number[], number[], number[]]>([
     samples.map((s) => Math.floor(s.timestamp / 1000)),
-    samples.map((s) => s.netReadBps),
+    samples.map((s) => s.netRecvBps),
     samples.map((s) => s.netSentBps)
   ]);
 

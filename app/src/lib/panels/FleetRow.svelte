@@ -57,6 +57,10 @@
     background: var(--text-regular);
     opacity: 0.6;
   }
+  .status-dot[data-status='pending'] {
+    background: var(--text-medium);
+    opacity: 0.5;
+  }
   .name {
     font-weight: var(--weight-medium);
     color: var(--text-bold);

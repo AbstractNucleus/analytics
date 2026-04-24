@@ -1,7 +1,8 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { render, screen } from '@testing-library/svelte';
 
-import { parseStatsSample } from '$lib/beszel';
+import { parseStatsSample, parseSystem } from '$lib/beszel';
+import systemsFixture from '../../../tests/fixtures/systems.json';
 import statsFixture from '../../../tests/fixtures/system_stats.json';
 
 const uplotCalls: Array<{ opts: unknown; data: unknown }> = [];
@@ -19,8 +20,9 @@ vi.mock('uplot', () => {
 
 import CpuPanel from './CpuPanel.svelte';
 
+const SYSTEM_ID = parseSystem(systemsFixture[0]).id;
 const SAMPLES = statsFixture.items
-  .filter((row) => row.system === 'abc123def456ghi')
+  .filter((row) => row.system === SYSTEM_ID)
   .map(parseStatsSample);
 
 describe('CpuPanel', () => {

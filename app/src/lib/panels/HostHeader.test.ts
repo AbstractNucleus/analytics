@@ -6,28 +6,37 @@ import systemsFixture from '../../../tests/fixtures/systems.json';
 
 import HostHeader from './HostHeader.svelte';
 
-const BSERVER = parseSystem(systemsFixture[0]); // status 'up'
-const PI = parseSystem(systemsFixture[2]); // status 'paused'
+const SYSTEM = parseSystem(systemsFixture[0]);
 
 describe('HostHeader', () => {
-  it('renders hostname and a status dot reflecting up state', () => {
-    render(HostHeader, { props: { system: BSERVER } });
-    expect(screen.getByText(/bserver/)).toBeInTheDocument();
+  it('renders the hostname and a status dot reflecting the current state', () => {
+    render(HostHeader, { props: { system: SYSTEM } });
+    expect(screen.getByText(SYSTEM.name)).toBeInTheDocument();
     const dot = document.querySelector('.status-dot');
     expect(dot).not.toBeNull();
-    expect(dot?.getAttribute('data-status')).toBe('up');
+    expect(dot?.getAttribute('data-status')).toBe(SYSTEM.status);
   });
 
   it('shows relative-time last-seen via formatRelativeTime', () => {
     const now = 1_700_000_000_000;
-    const lastSeen = now - 45_000; // 45 seconds ago
-    render(HostHeader, { props: { system: BSERVER, lastSeenMs: lastSeen, nowMs: now } });
+    const lastSeen = now - 45_000;
+    render(HostHeader, {
+      props: { system: SYSTEM, lastSeenMs: lastSeen, nowMs: now },
+    });
     expect(screen.getByText(/45s ago/)).toBeInTheDocument();
   });
 
-  it('reflects paused status on the dot', () => {
-    render(HostHeader, { props: { system: PI } });
+  it('reflects an overridden status on the dot', () => {
+    const paused = { ...SYSTEM, status: 'paused' as const };
+    render(HostHeader, { props: { system: paused } });
     const dot = document.querySelector('.status-dot');
     expect(dot?.getAttribute('data-status')).toBe('paused');
+  });
+
+  it('reflects the new "pending" status on the dot', () => {
+    const pending = { ...SYSTEM, status: 'pending' as const };
+    render(HostHeader, { props: { system: pending } });
+    const dot = document.querySelector('.status-dot');
+    expect(dot?.getAttribute('data-status')).toBe('pending');
   });
 });

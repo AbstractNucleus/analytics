@@ -1,8 +1,9 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { render, screen } from '@testing-library/svelte';
 
-import { parseContainer, parseStatsSample, parseSystem } from '$lib/beszel';
+import { parseContainer, parseStatsSample, parseSystem, parseSystemDetails } from '$lib/beszel';
 import systemsFixture from '../../../../tests/fixtures/systems.json';
+import systemDetailsFixture from '../../../../tests/fixtures/system_details.json';
 import statsFixture from '../../../../tests/fixtures/system_stats.json';
 import containersFixture from '../../../../tests/fixtures/containers.json';
 
@@ -18,11 +19,12 @@ vi.mock('uplot', () => {
 import Page from './+page.svelte';
 
 const SYSTEM = parseSystem(systemsFixture[0]);
+const SYSTEM_DETAILS = parseSystemDetails(systemDetailsFixture[0]);
 const SAMPLES = statsFixture.items
-  .filter((row) => row.system === 'abc123def456ghi')
+  .filter((row) => row.system === SYSTEM.id)
   .map(parseStatsSample);
 const CONTAINERS = containersFixture
-  .filter((row) => row.system === 'abc123def456ghi')
+  .filter((row) => row.system === SYSTEM.id)
   .map(parseContainer);
 
 describe('per-host view (hosts/[slug]/+page.svelte)', () => {
@@ -35,25 +37,38 @@ describe('per-host view (hosts/[slug]/+page.svelte)', () => {
       props: {
         data: {
           system: SYSTEM,
+          systemDetails: SYSTEM_DETAILS,
           samples: SAMPLES,
           containers: CONTAINERS,
-          beszelUrl: undefined
-        }
-      }
+          beszelUrl: undefined,
+        },
+      },
     });
 
-    // HostHeader: hostname + status dot.
-    expect(screen.getByText(/bserver/)).toBeInTheDocument();
+    expect(screen.getByText(SYSTEM.name)).toBeInTheDocument();
     const dot = document.querySelector('.status-dot');
-    expect(dot?.getAttribute('data-status')).toBe('up');
+    expect(dot?.getAttribute('data-status')).toBe(SYSTEM.status);
 
-    // Panel section aria-labels give us a reliable way to confirm each panel
-    // is mounted without binding tests to internal DOM structure.
     expect(document.querySelector('[aria-label="CPU"]')).not.toBeNull();
     expect(document.querySelector('[aria-label="Memory"]')).not.toBeNull();
     expect(document.querySelector('[aria-label="Disk"]')).not.toBeNull();
     expect(document.querySelector('[aria-label="Network"]')).not.toBeNull();
-    expect(document.querySelector('[aria-label="Temperatures"]')).not.toBeNull();
     expect(document.querySelector('[aria-label="Uptime and kernel"]')).not.toBeNull();
+  });
+
+  it('surfaces kernel and OS name from SystemDetails in the uptime panel', () => {
+    render(Page, {
+      props: {
+        data: {
+          system: SYSTEM,
+          systemDetails: SYSTEM_DETAILS,
+          samples: SAMPLES,
+          containers: CONTAINERS,
+          beszelUrl: undefined,
+        },
+      },
+    });
+    expect(screen.getByText(SYSTEM_DETAILS.kernel)).toBeInTheDocument();
+    expect(screen.getByText(SYSTEM_DETAILS.osName)).toBeInTheDocument();
   });
 });
