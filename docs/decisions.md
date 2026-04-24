@@ -134,6 +134,10 @@ Beszel is a pinned Docker image dependency, not vendored, not forked.
 
 No decision yet on whether to use ntfy, Telegram, email, or a chat webhook. The user is not sure notifications are needed. Revisit when threshold alerts and a dead-man switch actually get built.
 
+### Beszel v0.18.7 schema conformance (post-deploy)
+
+Phase 1 MVP shipped with synthesized fixtures because no live hub was reachable at build time. On 2026-04-24 a throwaway hub was inspected and found to diverge from our assumed shape in ways that require a multi-file refactor of `$lib/beszel` and `$lib/panels`. Deferred to a phase-1.5 PR after the stack is up on bserver and real fixtures can be captured. See [decisions/2026-04-24-beszel-schema-drift.md](decisions/2026-04-24-beszel-schema-drift.md).
+
 ---
 
 ## Open questions for implementation
