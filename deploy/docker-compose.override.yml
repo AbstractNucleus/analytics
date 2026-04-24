@@ -1,0 +1,23 @@
+# Dev override: swap the built frontend image for a Vite dev server that
+# bind-mounts ../app so edits hot-reload. Hub and agent are unchanged from
+# prod. Loaded automatically by `docker compose up` alongside the base file;
+# prod deploys must pass `-f docker-compose.yml` only.
+
+services:
+  frontend:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ../app:/app
+      # Named volume on /app/node_modules so the host bind-mount doesn't
+      # shadow the container-installed modules (host may be Windows).
+      - frontend-node-modules:/app/node_modules
+    command: sh -c "corepack enable && corepack prepare pnpm@10.33.2 --activate && pnpm install --frozen-lockfile && pnpm dev --host 0.0.0.0 --port 5173"
+    ports:
+      - "5173:5173"
+    environment:
+      PUBLIC_BESZEL_URL: "${PUBLIC_BESZEL_URL}"
+      BESZEL_API_TOKEN: "${BESZEL_API_TOKEN}"
+
+volumes:
+  frontend-node-modules:
