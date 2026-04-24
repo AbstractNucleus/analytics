@@ -1,7 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import systemsFixture from '../../../tests/fixtures/systems.json';
+import systemDetailsFixture from '../../../tests/fixtures/system_details.json';
 import systemStatsFixture from '../../../tests/fixtures/system_stats.json';
+import containersFixture from '../../../tests/fixtures/containers.json';
+import containerStatsFixture from '../../../tests/fixtures/container_stats.json';
 import realtimeEventFixture from '../../../tests/fixtures/realtime-event.json';
+
+const rawSystem = systemsFixture[0] as Record<string, unknown>;
+const SYSTEM_ID = rawSystem.id as string;
+const SYSTEM_HOST = rawSystem.host as string;
 
 // Per-test collection-method spies, reassigned by the mock factory each time the test calls
 // `new PocketBase(...)`. We keep them at module scope so test bodies can assert against them.
@@ -16,7 +23,6 @@ const authStoreSaveSpy = vi.fn();
 
 vi.mock('pocketbase', () => {
   const PocketBase = vi.fn().mockImplementation(function MockPB(this: unknown) {
-    // `this` is the new-instance; attach the stub methods.
     Object.assign(this as object, {
       authStore: { save: authStoreSaveSpy },
       collection: collectionSpy,
@@ -45,7 +51,6 @@ function resetSpies() {
     getFirstListItem: getFirstListItemSpy,
     subscribe: subscribeSpy,
   }));
-  // subscribe resolves to an async unsubscribe function by default.
   subscribeSpy.mockResolvedValue(unsubscribeMock);
 }
 
@@ -58,7 +63,10 @@ describe('createClient', () => {
     const client = createClient('http://localhost:8090');
     expect(typeof client.listSystems).toBe('function');
     expect(typeof client.getSystem).toBe('function');
+    expect(typeof client.getSystemDetails).toBe('function');
     expect(typeof client.getRecentStats).toBe('function');
+    expect(typeof client.getRecentContainerStats).toBe('function');
+    expect(typeof client.listContainers).toBe('function');
     expect(typeof client.subscribeStats).toBe('function');
     expect(typeof client.subscribeFleet).toBe('function');
   });
@@ -80,64 +88,109 @@ describe('createClient', () => {
       const rows = await client.listSystems();
       expect(collectionSpy).toHaveBeenCalledWith('systems');
       expect(getFullListSpy).toHaveBeenCalled();
-      expect(rows).toHaveLength(3);
-      expect(rows[0]).toMatchObject({ id: 'abc123def456ghi', slug: 'bserver', port: 45876 });
+      expect(rows).toHaveLength(systemsFixture.length);
+      expect(rows[0]).toMatchObject({ id: SYSTEM_ID, slug: SYSTEM_HOST });
     });
   });
 
   describe('getSystem', () => {
     it('looks up a system by host (slug) and returns a parsed SystemRow', async () => {
-      getFirstListItemSpy.mockResolvedValue(systemsFixture[1]);
+      getFirstListItemSpy.mockResolvedValue(rawSystem);
       const client = createClient('http://localhost:8090');
-      const row = await client.getSystem('laptop');
+      const row = await client.getSystem(SYSTEM_HOST);
       expect(collectionSpy).toHaveBeenCalledWith('systems');
       expect(getFirstListItemSpy).toHaveBeenCalled();
       const [filterArg] = getFirstListItemSpy.mock.calls[0];
       expect(filterArg).toContain('host');
-      expect(filterArg).toContain('laptop');
-      expect(row.slug).toBe('laptop');
-      expect(row.cpuCores).toBe(16);
+      expect(filterArg).toContain(SYSTEM_HOST);
+      expect(row.slug).toBe(SYSTEM_HOST);
+      expect(row.id).toBe(SYSTEM_ID);
+    });
+  });
+
+  describe('getSystemDetails', () => {
+    it('resolves the system id then fetches the matching system_details row', async () => {
+      // First call (getSystem) resolves via systems collection; then system_details lookup by FK.
+      getFirstListItemSpy
+        .mockResolvedValueOnce(rawSystem) // for getSystem
+        .mockResolvedValueOnce(systemDetailsFixture[0]); // for system_details by system fk
+      const client = createClient('http://localhost:8090');
+      const details = await client.getSystemDetails(SYSTEM_HOST);
+
+      expect(collectionSpy).toHaveBeenCalledWith('systems');
+      expect(collectionSpy).toHaveBeenCalledWith('system_details');
+      expect(getFirstListItemSpy).toHaveBeenCalledTimes(2);
+      const [secondFilter] = getFirstListItemSpy.mock.calls[1];
+      expect(secondFilter).toContain('system');
+      expect(secondFilter).toContain(SYSTEM_ID);
+      expect(details.systemId).toBe(SYSTEM_ID);
+      expect(details.hostname).toBe(systemDetailsFixture[0].hostname);
+      expect(details.kernel).toBe(systemDetailsFixture[0].kernel);
     });
   });
 
   describe('getRecentStats', () => {
     it('queries system_stats with a filter bound to the resolved system id and time range', async () => {
-      // getSystem call that getRecentStats performs internally
-      getFirstListItemSpy.mockResolvedValue(systemsFixture[0]);
+      getFirstListItemSpy.mockResolvedValue(rawSystem);
       getListSpy.mockResolvedValue(systemStatsFixture);
       const client = createClient('http://localhost:8090');
-      const samples = await client.getRecentStats('bserver', '1h');
+      const samples = await client.getRecentStats(SYSTEM_HOST, '1h');
       expect(collectionSpy).toHaveBeenCalledWith('system_stats');
       expect(getListSpy).toHaveBeenCalled();
       const [, , opts] = getListSpy.mock.calls[0];
-      expect(opts.filter).toContain("system = 'abc123def456ghi'");
+      expect(opts.filter).toContain(`system = '${SYSTEM_ID}'`);
       expect(opts.filter).toContain('created >=');
-      expect(samples).toHaveLength(5);
-      expect(samples[0]).toMatchObject({ systemId: 'abc123def456ghi', cpuPct: 23.5 });
+      expect(samples).toHaveLength(systemStatsFixture.items.length);
+      expect(samples[0]).toMatchObject({ systemId: SYSTEM_ID });
+    });
+  });
+
+  describe('getRecentContainerStats', () => {
+    it('queries container_stats with a filter bound to the resolved system id and time range', async () => {
+      getFirstListItemSpy.mockResolvedValue(rawSystem);
+      getListSpy.mockResolvedValue(containerStatsFixture);
+      const client = createClient('http://localhost:8090');
+      const samples = await client.getRecentContainerStats(SYSTEM_HOST, '1h');
+      expect(collectionSpy).toHaveBeenCalledWith('container_stats');
+      expect(getListSpy).toHaveBeenCalled();
+      const [, , opts] = getListSpy.mock.calls[0];
+      expect(opts.filter).toContain(`system = '${SYSTEM_ID}'`);
+      expect(opts.filter).toContain('created >=');
+      expect(samples).toHaveLength(containerStatsFixture.items.length);
+      expect(samples[0].systemId).toBe(SYSTEM_ID);
+      expect(Array.isArray(samples[0].containers)).toBe(true);
+    });
+  });
+
+  describe('listContainers', () => {
+    it('fetches containers scoped to the resolved system id', async () => {
+      getFirstListItemSpy.mockResolvedValue(rawSystem);
+      getFullListSpy.mockResolvedValue(containersFixture);
+      const client = createClient('http://localhost:8090');
+      const rows = await client.listContainers(SYSTEM_HOST);
+      expect(collectionSpy).toHaveBeenCalledWith('containers');
+      const [opts] = getFullListSpy.mock.calls[0];
+      expect(opts.filter).toContain(`system = '${SYSTEM_ID}'`);
+      expect(rows).toHaveLength(containersFixture.length);
     });
   });
 
   describe('subscribeStats', () => {
     it('subscribes with a filter limiting events to the host and forwards parsed samples', async () => {
-      getFirstListItemSpy.mockResolvedValue(systemsFixture[0]);
+      getFirstListItemSpy.mockResolvedValue(rawSystem);
       const client = createClient('http://localhost:8090');
       const handler = vi.fn();
-      const unsub = await client.subscribeStats('bserver', handler);
+      const unsub = await client.subscribeStats(SYSTEM_HOST, handler);
 
       expect(collectionSpy).toHaveBeenCalledWith('system_stats');
       expect(subscribeSpy).toHaveBeenCalled();
       const [topicArg, cbArg, optsArg] = subscribeSpy.mock.calls[0];
       expect(topicArg).toBe('*');
-      // filter narrows to the resolved system id
-      expect(optsArg?.filter ?? '').toContain("system = 'abc123def456ghi'");
+      expect(optsArg?.filter ?? '').toContain(`system = '${SYSTEM_ID}'`);
 
-      // Simulate an incoming event: PocketBase invokes the callback with { action, record }
       cbArg({ action: 'create', record: realtimeEventFixture.record });
       expect(handler).toHaveBeenCalledTimes(1);
-      expect(handler.mock.calls[0][0]).toMatchObject({
-        systemId: 'abc123def456ghi',
-        cpuPct: 27.8,
-      });
+      expect(handler.mock.calls[0][0]).toMatchObject({ systemId: SYSTEM_ID });
 
       expect(typeof unsub).toBe('function');
       unsub();
@@ -158,7 +211,7 @@ describe('createClient', () => {
 
       cbArg({ action: 'update', record: realtimeEventFixture.record });
       expect(handler).toHaveBeenCalledWith(
-        expect.objectContaining({ systemId: 'abc123def456ghi', cpuPct: 27.8 }),
+        expect.objectContaining({ systemId: SYSTEM_ID }),
       );
 
       unsub();

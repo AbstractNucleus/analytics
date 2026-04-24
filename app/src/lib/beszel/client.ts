@@ -1,9 +1,17 @@
 import PocketBase from 'pocketbase';
-import { parseContainer, parseStatsSample, parseSystem } from './parse';
+import {
+  parseContainer,
+  parseContainerStats,
+  parseStatsSample,
+  parseSystem,
+  parseSystemDetails,
+} from './parse';
 import type {
   ContainerRow,
+  ContainerStatsSample,
   HostSlug,
   StatsSample,
+  SystemDetails,
   SystemRow,
   TimeRange,
   Unsubscribe,
@@ -12,7 +20,9 @@ import type {
 export interface BeszelClient {
   listSystems(): Promise<SystemRow[]>;
   getSystem(slug: HostSlug): Promise<SystemRow>;
+  getSystemDetails(slug: HostSlug): Promise<SystemDetails>;
   getRecentStats(slug: HostSlug, range: TimeRange): Promise<StatsSample[]>;
+  getRecentContainerStats(slug: HostSlug, range: TimeRange): Promise<ContainerStatsSample[]>;
   listContainers(slug: HostSlug): Promise<ContainerRow[]>;
   subscribeStats(slug: HostSlug, handler: (sample: StatsSample) => void): Promise<Unsubscribe>;
   subscribeFleet(handler: (sample: StatsSample) => void): Promise<Unsubscribe>;
@@ -58,6 +68,14 @@ export function createClient(baseUrl: string, apiToken?: string): BeszelClient {
     return parseSystem(raw);
   }
 
+  async function getSystemDetails(slug: HostSlug): Promise<SystemDetails> {
+    const systemId = await resolveSystemId(slug);
+    const raw = await pb
+      .collection('system_details')
+      .getFirstListItem(`system = '${escapeFilterValue(systemId)}'`);
+    return parseSystemDetails(raw);
+  }
+
   async function listSystems(): Promise<SystemRow[]> {
     const raw = await pb.collection('systems').getFullList();
     return (raw as unknown[]).map(parseSystem);
@@ -71,6 +89,19 @@ export function createClient(baseUrl: string, apiToken?: string): BeszelClient {
       .collection('system_stats')
       .getList(1, MAX_PER_PAGE, { filter, sort: 'created' });
     return (result.items as unknown[]).map(parseStatsSample);
+  }
+
+  async function getRecentContainerStats(
+    slug: HostSlug,
+    range: TimeRange,
+  ): Promise<ContainerStatsSample[]> {
+    const systemId = await resolveSystemId(slug);
+    const sinceMs = Date.now() - RANGE_MS[range];
+    const filter = `system = '${escapeFilterValue(systemId)}' && created >= '${pbDate(sinceMs)}'`;
+    const result = await pb
+      .collection('container_stats')
+      .getList(1, MAX_PER_PAGE, { filter, sort: 'created' });
+    return (result.items as unknown[]).map(parseContainerStats);
   }
 
   async function listContainers(slug: HostSlug): Promise<ContainerRow[]> {
@@ -114,7 +145,9 @@ export function createClient(baseUrl: string, apiToken?: string): BeszelClient {
   return {
     listSystems,
     getSystem,
+    getSystemDetails,
     getRecentStats,
+    getRecentContainerStats,
     listContainers,
     subscribeStats,
     subscribeFleet,
