@@ -46,3 +46,24 @@ export function formatRelativeTime(whenMs: number, nowMs: number = Date.now()): 
 
   return past ? `${value}${unit} ago` : `in ${value}${unit}`;
 }
+
+const SECONDS_PER_HOUR = 3_600;
+const SECONDS_PER_DAY = 86_400;
+
+/**
+ * Render a monotonic uptime in seconds as `Xd HHh` — days unpadded, hours
+ * always two-digit so a column of readouts stays vertically aligned.
+ *
+ * Partial hours truncate; uptime is a monotonic counter, not a duration, so
+ * rounding up could show "24h" the instant before the day rolls over.
+ * NaN/Infinity/negative values fall back to `'—'`.
+ */
+export function formatUptime(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds < 0) return '—';
+
+  const totalSeconds = Math.floor(seconds);
+  const days = Math.floor(totalSeconds / SECONDS_PER_DAY);
+  const hours = Math.floor((totalSeconds % SECONDS_PER_DAY) / SECONDS_PER_HOUR);
+  const hh = hours.toString().padStart(2, '0');
+  return `${days}d ${hh}h`;
+}
