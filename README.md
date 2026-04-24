@@ -193,3 +193,6 @@ pnpm -C app build          # produces app/build/ via adapter-node
   — Phase 1 implementation plan (narrative).
 - [docs/plans/2026-04-23-phase-1-mvp-concerns.json](docs/plans/2026-04-23-phase-1-mvp-concerns.json)
   — concern decomposition used to parallelize the build.
+- [docs/patterns/tailnet-https-via-cloudflare.md](docs/patterns/tailnet-https-via-cloudflare.md)
+  — the Caddy + Cloudflare DNS-01 + gray-cloud pattern that makes
+  `https://analytics.noelkleen.com` resolve only over the tailnet.
