@@ -106,6 +106,13 @@ Within ~60s, the bserver row appears on the fleet view.
 
 ## Install agents on coco, kleen-pc, ZacBookPro
 
+> **Only the three non-hub hosts.** bserver already runs `beszel-agent` as a
+> container (see the compose file) with `pid: host` + `network_mode: host`, so
+> it self-reports without the installer scripts. Running the Linux one-liner on
+> bserver on top of the compose agent would produce two agents reporting the
+> same metrics under different keys. Leave bserver's compose agent alone; use
+> the scripts below only on coco, kleen-pc, and ZacBookPro.
+
 For each additional agent host, first add the system in the hub admin UI
 (Settings -> Systems -> Add System) to generate that host's public key, then
 run the installer one-liner on the host itself.

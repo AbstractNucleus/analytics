@@ -45,6 +45,7 @@ export function parseSystem(raw: unknown): SystemRow {
     status: statusOf(r.status),
     cpuCores: num(info.cpu),
     memGb: num(info.m),
+    diskTotalGb: num(info.dt),
     uptimeSeconds: num(info.u),
     kernel: str(info.k),
     os: str(info.os),

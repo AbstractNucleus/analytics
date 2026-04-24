@@ -40,9 +40,11 @@ services:
       - beszel-hub
 
   caddy:
-    # iarekylew00t/caddy-cloudflare bundles Caddy v2 + caddy-dns/cloudflare.
-    # Pinned to a 2.x minor so ACME behavior stays stable across rebuilds.
-    image: iarekylew00t/caddy-cloudflare:2.8
+    # Built in-repo via deploy/caddy/Dockerfile (xcaddy + caddy-dns/cloudflare)
+    # so TLS doesn't depend on a third-party community image.
+    build:
+      context: ./caddy
+      dockerfile: Dockerfile
     restart: unless-stopped
     ports:
       - "${TS_IP}:443:443"

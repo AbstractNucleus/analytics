@@ -21,7 +21,7 @@
 <div class="stack">
   <CpuPanel samples={data.samples} currentPct={latest?.cpuPct} />
   <MemoryPanel currentPct={latest?.memPct} memGb={data.system.memGb} />
-  <DiskPanel currentPct={latest?.diskPct} />
+  <DiskPanel currentPct={latest?.diskPct} diskTotalGb={data.system.diskTotalGb} />
   <NetworkPanel
     samples={data.samples}
     currentReadBps={latest?.netReadBps}
