@@ -6,11 +6,13 @@
  *   BESZEL_URL=http://localhost:8090 BESZEL_API_TOKEN=<token> pnpm -C app capture-fixtures
  *
  * Outputs (overwrites any existing file):
- *   app/tests/fixtures/systems.json         — array: `systems` collection via getFullList
- *   app/tests/fixtures/system_stats.json    — list-response: first page (20 newest) of `system_stats`
- *   app/tests/fixtures/containers.json      — array: `containers` collection via getFullList
- *   app/tests/fixtures/realtime-event.json  — one SSE envelope `{ action, record }` from a
- *                                             `system_stats` subscription
+ *   app/tests/fixtures/systems.json          — array: `systems` collection via getFullList
+ *   app/tests/fixtures/system_details.json   — array: `system_details` collection via getFullList
+ *   app/tests/fixtures/system_stats.json     — list-response: first page (20 newest) of `system_stats`
+ *   app/tests/fixtures/containers.json       — array: `containers` collection via getFullList
+ *   app/tests/fixtures/container_stats.json  — list-response: first page (20 newest) of `container_stats`
+ *   app/tests/fixtures/realtime-event.json   — one SSE envelope `{ action, record }` from a
+ *                                              `system_stats` subscription
  *
  * Prerequisites:
  *   - A Beszel hub is reachable at BESZEL_URL. `docker compose up -d beszel-hub beszel-agent`
@@ -37,7 +39,10 @@ if (typeof (globalThis as { EventSource?: unknown }).EventSource === 'undefined'
   (globalThis as { EventSource?: unknown }).EventSource = EventSourcePolyfill;
 }
 
-const REALTIME_TIMEOUT_MS = 10_000;
+// Beszel's agent pushes fresh `system_stats` on a ~60 s cadence, so the default 10 s window
+// often misses the tick when re-capturing against an already-connected agent. Override via
+// REALTIME_TIMEOUT_MS= to stretch the wait — 90 s is reliable for a single 1m-rollup tick.
+const REALTIME_TIMEOUT_MS = Number(process.env.REALTIME_TIMEOUT_MS) || 10_000;
 
 const here = dirname(fileURLToPath(import.meta.url));
 const FIXTURES_DIR = resolve(here, '..', 'tests', 'fixtures');
@@ -80,6 +85,14 @@ async function main() {
   }
   writeFixture('systems.json', systems);
 
+  let systemDetails: unknown;
+  try {
+    systemDetails = await pb.collection('system_details').getFullList();
+  } catch (err) {
+    fail(`failed to fetch system_details from ${url}`, err);
+  }
+  writeFixture('system_details.json', systemDetails);
+
   let systemStats: unknown;
   try {
     systemStats = await pb.collection('system_stats').getList(1, 20, { sort: '-created' });
@@ -95,6 +108,14 @@ async function main() {
     fail(`failed to fetch containers from ${url}`, err);
   }
   writeFixture('containers.json', containers);
+
+  let containerStats: unknown;
+  try {
+    containerStats = await pb.collection('container_stats').getList(1, 20, { sort: '-created' });
+  } catch (err) {
+    fail(`failed to fetch container_stats from ${url}`, err);
+  }
+  writeFixture('container_stats.json', containerStats);
 
   // Realtime capture — subscribe, wait for one event, unsubscribe.
   let unsubscribe: (() => void) | undefined;

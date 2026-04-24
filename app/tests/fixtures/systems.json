@@ -1,65 +1,31 @@
 [
   {
-    "id": "abc123def456ghi",
     "collectionId": "2hz5ncl8tizk5nx",
     "collectionName": "systems",
-    "name": "bserver",
-    "host": "bserver",
+    "created": "2026-04-24 16:58:49.061Z",
+    "host": "beszel-capture-agent",
+    "id": "tm87ons87oyts3r",
+    "info": {
+      "t": 12,
+      "u": 10858,
+      "cpu": 0.12,
+      "mp": 5.2,
+      "dp": 0.28,
+      "v": "0.18.7",
+      "bb": 47,
+      "la": [
+        0.02,
+        0.01,
+        0
+      ],
+      "ct": 1
+    },
+    "name": "test-host",
     "port": "45876",
     "status": "up",
-    "info": {
-      "cpu": 8,
-      "m": 32,
-      "dt": 42.5,
-      "u": 1209600,
-      "k": "6.8.0-52-generic",
-      "os": "ubuntu 24.04",
-      "b": 1713312000
-    },
-    "users": ["user001"],
-    "created": "2026-03-10 14:02:11.123Z",
-    "updated": "2026-04-24 11:59:45.001Z"
-  },
-  {
-    "id": "jkl456mno789pqr",
-    "collectionId": "2hz5ncl8tizk5nx",
-    "collectionName": "systems",
-    "name": "laptop",
-    "host": "laptop",
-    "port": "45876",
-    "status": "up",
-    "info": {
-      "cpu": 16,
-      "m": 64,
-      "dt": 67.1,
-      "u": 86400,
-      "k": "6.12.3-arch1-1",
-      "os": "arch linux",
-      "b": 1713916800
-    },
-    "users": ["user001"],
-    "created": "2026-03-10 14:10:00.000Z",
-    "updated": "2026-04-24 11:59:44.830Z"
-  },
-  {
-    "id": "stu123vwx456yza",
-    "collectionId": "2hz5ncl8tizk5nx",
-    "collectionName": "systems",
-    "name": "pi",
-    "host": "pi",
-    "port": "45876",
-    "status": "paused",
-    "info": {
-      "cpu": 4,
-      "m": 8,
-      "dt": 28.9,
-      "u": 604800,
-      "k": "6.6.20+rpt-rpi-v8",
-      "os": "raspberry pi os",
-      "b": 1713398400
-    },
-    "users": ["user001"],
-    "created": "2026-03-11 08:22:31.000Z",
-    "updated": "2026-04-24 11:57:20.000Z"
+    "updated": "2026-04-24 17:02:00.133Z",
+    "users": [
+      "1gs7cy2twdscf6l"
+    ]
   }
 ]

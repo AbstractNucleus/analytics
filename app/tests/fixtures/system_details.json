@@ -1,0 +1,19 @@
+[
+  {
+    "arch": "x86_64",
+    "collectionId": "pbc_3116237454",
+    "collectionName": "system_details",
+    "cores": 6,
+    "cpu": "AMD Ryzen 5 5600X 6-Core Processor",
+    "hostname": "37f443c5fac4",
+    "id": "tm87ons87oyts3r",
+    "kernel": "6.6.87.2-microsoft-standard-WSL2",
+    "memory": 16717656064,
+    "os": 0,
+    "os_name": "Docker Desktop",
+    "podman": false,
+    "system": "tm87ons87oyts3r",
+    "threads": 12,
+    "updated": "2026-04-24 16:59:00.114Z"
+  }
+]

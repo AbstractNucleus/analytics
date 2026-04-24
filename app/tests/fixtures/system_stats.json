@@ -1,93 +1,278 @@
 {
-  "page": 1,
-  "perPage": 20,
-  "totalItems": 5,
-  "totalPages": 1,
   "items": [
     {
-      "id": "stat001aaaaaaaa",
-      "collectionId": "juohu4hhb4yzg51",
+      "collectionId": "ej9oowivz8b2mht",
       "collectionName": "system_stats",
-      "system": "abc123def456ghi",
-      "type": "1m",
+      "created": "2026-04-24 17:02:00.132Z",
+      "id": "97ol1ewsjbmsrzt",
       "stats": {
-        "cpu": 23.5,
-        "mem": 48.2,
-        "disk": 42.5,
-        "nr": 1048576,
-        "ns": 524288,
-        "t": { "coretemp_package_id_0": 54.2, "nvme_composite": 41.0 }
+        "cpu": 0.12,
+        "m": 15.57,
+        "mu": 0.81,
+        "mp": 5.2,
+        "mb": 0.46,
+        "s": 4,
+        "d": 1006.85,
+        "du": 2.66,
+        "dp": 0.28,
+        "b": [
+          29,
+          18
+        ],
+        "la": [
+          0.02,
+          0.01,
+          0
+        ],
+        "ni": {
+          "eth0": [
+            29,
+            18,
+            8865,
+            7339
+          ]
+        },
+        "dio": [
+          68,
+          3345
+        ],
+        "cpub": [
+          0.03,
+          0.08,
+          0,
+          0,
+          99.88
+        ],
+        "cpus": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "dios": [
+          0,
+          0.02,
+          0,
+          0,
+          0.68,
+          0.03
+        ]
       },
-      "created": "2026-04-24 11:59:00.000Z",
-      "updated": "2026-04-24 11:59:00.000Z"
+      "system": "tm87ons87oyts3r",
+      "type": "1m",
+      "updated": "2026-04-24 17:02:00.132Z"
     },
     {
-      "id": "stat002bbbbbbbb",
-      "collectionId": "juohu4hhb4yzg51",
+      "collectionId": "ej9oowivz8b2mht",
       "collectionName": "system_stats",
-      "system": "abc123def456ghi",
-      "type": "1m",
+      "created": "2026-04-24 17:01:00.136Z",
+      "id": "gg08vvbo1m7nwvh",
       "stats": {
-        "cpu": 31.2,
-        "mem": 49.1,
-        "disk": 42.5,
-        "nr": 2097152,
-        "ns": 786432,
-        "t": { "coretemp_package_id_0": 56.8, "nvme_composite": 42.5 }
+        "cpu": 0.11,
+        "m": 15.57,
+        "mu": 0.81,
+        "mp": 5.2,
+        "mb": 0.46,
+        "s": 4,
+        "d": 1006.85,
+        "du": 2.66,
+        "dp": 0.28,
+        "b": [
+          30,
+          18
+        ],
+        "la": [
+          0.05,
+          0.01,
+          0
+        ],
+        "ni": {
+          "eth0": [
+            30,
+            18,
+            7069,
+            6243
+          ]
+        },
+        "dio": [
+          68,
+          4096
+        ],
+        "cpub": [
+          0.03,
+          0.07,
+          0,
+          0,
+          99.89
+        ],
+        "cpus": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "dios": [
+          0,
+          0.03,
+          0.01,
+          1,
+          0.63,
+          0.04
+        ]
       },
-      "created": "2026-04-24 11:58:00.000Z",
-      "updated": "2026-04-24 11:58:00.000Z"
+      "system": "tm87ons87oyts3r",
+      "type": "1m",
+      "updated": "2026-04-24 17:01:00.136Z"
     },
     {
-      "id": "stat003ccccccccc",
-      "collectionId": "juohu4hhb4yzg51",
+      "collectionId": "ej9oowivz8b2mht",
       "collectionName": "system_stats",
-      "system": "abc123def456ghi",
-      "type": "1m",
+      "created": "2026-04-24 17:00:00.141Z",
+      "id": "yhujx3ooe4p4pfq",
       "stats": {
-        "cpu": 18.7,
-        "mem": 47.8,
-        "disk": 42.5,
-        "nr": 524288,
-        "ns": 262144,
-        "t": { "coretemp_package_id_0": 51.0, "nvme_composite": 39.5 }
+        "cpu": 0.11,
+        "m": 15.57,
+        "mu": 0.83,
+        "mp": 5.31,
+        "mb": 0.46,
+        "s": 4,
+        "d": 1006.85,
+        "du": 2.66,
+        "dp": 0.28,
+        "dr": 0.01,
+        "b": [
+          42,
+          28
+        ],
+        "la": [
+          0,
+          0,
+          0
+        ],
+        "ni": {
+          "eth0": [
+            42,
+            28,
+            5215,
+            5105
+          ]
+        },
+        "dio": [
+          5730,
+          3274
+        ],
+        "cpub": [
+          0.02,
+          0.07,
+          0,
+          0,
+          99.89
+        ],
+        "cpus": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "dios": [
+          0,
+          0.02,
+          0,
+          0.22,
+          0.69,
+          0.03
+        ]
       },
-      "created": "2026-04-24 11:57:00.000Z",
-      "updated": "2026-04-24 11:57:00.000Z"
+      "system": "tm87ons87oyts3r",
+      "type": "1m",
+      "updated": "2026-04-24 17:00:00.141Z"
     },
     {
-      "id": "stat004ddddddddd",
-      "collectionId": "juohu4hhb4yzg51",
+      "collectionId": "ej9oowivz8b2mht",
       "collectionName": "system_stats",
-      "system": "jkl456mno789pqr",
-      "type": "1m",
+      "created": "2026-04-24 16:59:00.113Z",
+      "id": "d5c3edsciqomdxo",
       "stats": {
-        "cpu": 12.3,
-        "mem": 35.6,
-        "disk": 67.1,
-        "nr": 131072,
-        "ns": 65536,
-        "t": {}
+        "cpu": 0.12,
+        "m": 15.57,
+        "mu": 0.82,
+        "mp": 5.3,
+        "mb": 0.46,
+        "s": 4,
+        "d": 1006.85,
+        "du": 2.66,
+        "dp": 0.28,
+        "dw": 0.01,
+        "la": [
+          0,
+          0,
+          0
+        ],
+        "ni": {
+          "eth0": [
+            0,
+            0,
+            2689,
+            3401
+          ]
+        },
+        "dio": [
+          4094,
+          6317
+        ],
+        "cpub": [
+          0.05,
+          0.07,
+          0,
+          0,
+          99.88
+        ],
+        "cpus": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
       },
-      "created": "2026-04-24 11:59:00.000Z",
-      "updated": "2026-04-24 11:59:00.000Z"
-    },
-    {
-      "id": "stat005eeeeeeeee",
-      "collectionId": "juohu4hhb4yzg51",
-      "collectionName": "system_stats",
-      "system": "jkl456mno789pqr",
+      "system": "tm87ons87oyts3r",
       "type": "1m",
-      "stats": {
-        "cpu": 15.9,
-        "mem": 36.1,
-        "disk": 67.1,
-        "nr": 196608,
-        "ns": 98304,
-        "t": {}
-      },
-      "created": "2026-04-24 11:58:00.000Z",
-      "updated": "2026-04-24 11:58:00.000Z"
+      "updated": "2026-04-24 16:59:00.113Z"
     }
-  ]
+  ],
+  "page": 1,
+  "perPage": 20,
+  "totalItems": 4,
+  "totalPages": 1
 }

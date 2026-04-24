@@ -1,32 +1,32 @@
 [
   {
-    "id": "cont001aaaaaaaa",
-    "collectionId": "containers1col",
+    "collectionId": "pbc_1864144027",
     "collectionName": "containers",
-    "system": "abc123def456ghi",
-    "name": "beszel-hub",
-    "stats": {
-      "cpu": 2.4,
-      "mem": 128.5,
-      "nr": 4096,
-      "ns": 2048
-    },
-    "created": "2026-03-10 14:05:00.000Z",
-    "updated": "2026-04-24 11:59:30.000Z"
+    "cpu": 0,
+    "health": 0,
+    "id": "37f443c5fac4",
+    "image": "henrygd/beszel-agent:0.18.7",
+    "memory": 4.48,
+    "name": "beszel-capture-agent",
+    "net": 47,
+    "ports": "",
+    "status": "Up 3 minutes",
+    "system": "tm87ons87oyts3r",
+    "updated": 1777050120133
   },
   {
-    "id": "cont002bbbbbbbb",
-    "collectionId": "containers1col",
+    "collectionId": "pbc_1864144027",
     "collectionName": "containers",
-    "system": "abc123def456ghi",
-    "name": "caddy",
-    "stats": {
-      "cpu": 0.3,
-      "mem": 24.1,
-      "nr": 1024,
-      "ns": 512
-    },
-    "created": "2026-03-10 14:06:00.000Z",
-    "updated": "2026-04-24 11:59:30.000Z"
+    "cpu": 0,
+    "health": 0,
+    "id": "47339228f6f1",
+    "image": "henrygd/beszel:0.18.7",
+    "memory": 11.43,
+    "name": "beszel-capture-hub",
+    "net": 191,
+    "ports": "8090",
+    "status": "Up 4 minutes",
+    "system": "tm87ons87oyts3r",
+    "updated": 1777050120133
   }
 ]

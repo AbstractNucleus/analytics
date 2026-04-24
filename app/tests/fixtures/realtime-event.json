@@ -1,20 +1,73 @@
 {
-  "action": "create",
   "record": {
-    "id": "stat006ffffffff",
-    "collectionId": "juohu4hhb4yzg51",
+    "collectionId": "ej9oowivz8b2mht",
     "collectionName": "system_stats",
-    "system": "abc123def456ghi",
-    "type": "1m",
+    "created": "2026-04-24 17:03:00.132Z",
+    "id": "uwvctk149gs1ogx",
     "stats": {
-      "cpu": 27.8,
-      "mem": 48.9,
-      "disk": 42.5,
-      "nr": 1572864,
-      "ns": 655360,
-      "t": { "coretemp_package_id_0": 55.1, "nvme_composite": 41.8 }
+      "cpu": 0.12,
+      "m": 15.57,
+      "mu": 0.81,
+      "mp": 5.17,
+      "mb": 0.46,
+      "s": 4,
+      "d": 1006.85,
+      "du": 2.66,
+      "dp": 0.28,
+      "b": [
+        30,
+        18
+      ],
+      "la": [
+        0,
+        0,
+        0
+      ],
+      "ni": {
+        "eth0": [
+          30,
+          18,
+          10703,
+          8477
+        ]
+      },
+      "dio": [
+        0,
+        2184
+      ],
+      "cpub": [
+        0.04,
+        0.08,
+        0,
+        0,
+        99.88
+      ],
+      "cpus": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dios": [
+        0,
+        0.02,
+        0,
+        0,
+        0.85,
+        0.03
+      ]
     },
-    "created": "2026-04-24 12:00:00.000Z",
-    "updated": "2026-04-24 12:00:00.000Z"
-  }
+    "system": "tm87ons87oyts3r",
+    "type": "1m",
+    "updated": "2026-04-24 17:03:00.132Z"
+  },
+  "action": "create"
 }
