@@ -1,0 +1,35 @@
+/* Self-hosted Roboto Mono @font-face declarations for the three weights the
+   design system uses. Files ship from /fonts/ (app/static/fonts/). Tabular
+   figures are enabled per-face so any element using the font gets them by
+   default; a body-level default is applied as a safety net. */
+
+@font-face {
+  font-family: 'Roboto Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/RobotoMono-Regular.woff2') format('woff2');
+  font-feature-settings: 'tnum' 1;
+}
+
+@font-face {
+  font-family: 'Roboto Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/RobotoMono-Medium.woff2') format('woff2');
+  font-feature-settings: 'tnum' 1;
+}
+
+@font-face {
+  font-family: 'Roboto Mono';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/RobotoMono-Bold.woff2') format('woff2');
+  font-feature-settings: 'tnum' 1;
+}
+
+body {
+  font-feature-settings: 'tnum' 1;
+}
