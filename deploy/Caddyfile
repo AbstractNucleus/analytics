@@ -1,0 +1,13 @@
+{
+	# Bind all listeners to the host's Tailscale IP so Caddy is unreachable
+	# outside the tailnet even if analytics.noelkleen.com resolves publicly.
+	bind {$TS_IP}
+	# Cloudflare DNS-01 via the caddy-dns/cloudflare plugin. Token needs
+	# Zone.DNS edit on noelkleen.com.
+	acme_dns cloudflare {$CLOUDFLARE_API_TOKEN}
+}
+
+analytics.noelkleen.com {
+	encode gzip zstd
+	reverse_proxy frontend:3000
+}
