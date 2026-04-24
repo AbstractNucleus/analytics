@@ -1,13 +1,16 @@
-<!-- Uptime readout and kernel string for a single host. -->
+<!-- Uptime readout plus kernel + OS string for a single host. Uptime is live
+     state sourced from SystemRow.uptimeSeconds; kernel and OS are static
+     descriptors pulled from SystemDetails. -->
 <script lang="ts">
   import { formatUptime } from '$lib/format';
-  import type { SystemRow } from '$lib/beszel';
 
   type Props = {
-    system: SystemRow;
+    uptimeSeconds: number;
+    kernel: string;
+    osName: string;
   };
 
-  const { system }: Props = $props();
+  const { uptimeSeconds, kernel, osName }: Props = $props();
 </script>
 
 <section class="panel" aria-label="Uptime and kernel">
@@ -17,15 +20,15 @@
   <dl>
     <div>
       <dt>Uptime</dt>
-      <dd>{formatUptime(system.uptimeSeconds)}</dd>
+      <dd>{formatUptime(uptimeSeconds)}</dd>
     </div>
     <div>
       <dt>Kernel</dt>
-      <dd>{system.kernel}</dd>
+      <dd>{kernel}</dd>
     </div>
     <div>
       <dt>OS</dt>
-      <dd>{system.os}</dd>
+      <dd>{osName}</dd>
     </div>
   </dl>
 </section>

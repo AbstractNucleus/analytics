@@ -4,13 +4,17 @@
 
   type Props = {
     currentPct?: number;
-    memGb: number;
+    /** Total memory in bytes (as reported by system_details.memory). */
+    memoryBytes: number;
   };
 
-  const { currentPct, memGb }: Props = $props();
+  const { currentPct, memoryBytes }: Props = $props();
+
+  const BYTES_PER_GB = 1024 * 1024 * 1024;
 
   const pct = $derived(currentPct ?? NaN);
-  const used = $derived(Number.isFinite(pct) ? (pct / 100) * memGb : NaN);
+  const totalGb = $derived(memoryBytes / BYTES_PER_GB);
+  const used = $derived(Number.isFinite(pct) ? (pct / 100) * totalGb : NaN);
 </script>
 
 <section class="panel" aria-label="Memory">
@@ -21,7 +25,7 @@
   <p class="sub">
     <span class="used">{formatTabular(used, { decimals: 1, suffix: 'GB' })}</span>
     <span class="sep"> / </span>
-    <span class="total">{formatTabular(memGb, { decimals: 0, suffix: 'GB' })}</span>
+    <span class="total">{formatTabular(totalGb, { decimals: 0, suffix: 'GB' })}</span>
   </p>
 </section>
 

@@ -1,7 +1,10 @@
 export type {
   ContainerRow,
+  ContainerStatsEntry,
+  ContainerStatsSample,
   HostSlug,
   StatsSample,
+  SystemDetails,
   SystemRow,
   SystemStatus,
   TimeRange,
@@ -9,4 +12,10 @@ export type {
 } from './types';
 export { createClient } from './client';
 export type { BeszelClient } from './client';
-export { parseContainer, parseStatsSample, parseSystem } from './parse';
+export {
+  parseContainer,
+  parseContainerStats,
+  parseStatsSample,
+  parseSystem,
+  parseSystemDetails,
+} from './parse';

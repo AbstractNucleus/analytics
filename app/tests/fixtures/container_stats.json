@@ -1,0 +1,116 @@
+{
+  "items": [
+    {
+      "collectionId": "juohu4jipgc13v7",
+      "collectionName": "container_stats",
+      "created": "2026-04-24 17:02:00.133Z",
+      "id": "c4441a6d29t2zjt",
+      "stats": [
+        {
+          "n": "beszel-capture-agent",
+          "c": 0,
+          "m": 4.48,
+          "b": [
+            29,
+            18
+          ]
+        },
+        {
+          "n": "beszel-capture-hub",
+          "c": 0,
+          "m": 11.43,
+          "b": [
+            99,
+            92
+          ]
+        }
+      ],
+      "system": "tm87ons87oyts3r",
+      "type": "1m",
+      "updated": "2026-04-24 17:02:00.133Z"
+    },
+    {
+      "collectionId": "juohu4jipgc13v7",
+      "collectionName": "container_stats",
+      "created": "2026-04-24 17:01:00.136Z",
+      "id": "tz6peviu15j4e10",
+      "stats": [
+        {
+          "n": "beszel-capture-hub",
+          "c": 0,
+          "m": 11.24,
+          "b": [
+            18,
+            30
+          ]
+        },
+        {
+          "n": "beszel-capture-agent",
+          "c": 0,
+          "m": 3.93,
+          "b": [
+            30,
+            18
+          ]
+        }
+      ],
+      "system": "tm87ons87oyts3r",
+      "type": "1m",
+      "updated": "2026-04-24 17:01:00.136Z"
+    },
+    {
+      "collectionId": "juohu4jipgc13v7",
+      "collectionName": "container_stats",
+      "created": "2026-04-24 17:00:00.141Z",
+      "id": "h0ko6kyf6fnb66o",
+      "stats": [
+        {
+          "n": "beszel-capture-agent",
+          "c": 0,
+          "m": 4.23,
+          "b": [
+            42,
+            28
+          ]
+        },
+        {
+          "n": "beszel-capture-hub",
+          "c": 0,
+          "m": 12.14,
+          "b": [
+            109,
+            107
+          ]
+        }
+      ],
+      "system": "tm87ons87oyts3r",
+      "type": "1m",
+      "updated": "2026-04-24 17:00:00.141Z"
+    },
+    {
+      "collectionId": "juohu4jipgc13v7",
+      "collectionName": "container_stats",
+      "created": "2026-04-24 16:59:00.114Z",
+      "id": "us65vksedl4clvc",
+      "stats": [
+        {
+          "n": "beszel-capture-agent",
+          "c": 0,
+          "m": 4.3
+        },
+        {
+          "n": "beszel-capture-hub",
+          "c": 0,
+          "m": 11.43
+        }
+      ],
+      "system": "tm87ons87oyts3r",
+      "type": "1m",
+      "updated": "2026-04-24 16:59:00.114Z"
+    }
+  ],
+  "page": 1,
+  "perPage": 20,
+  "totalItems": 4,
+  "totalPages": 1
+}
