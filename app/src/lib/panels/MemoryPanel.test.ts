@@ -18,8 +18,8 @@ describe('MemoryPanel', () => {
     expect(screen.getByText(/32/)).toBeInTheDocument();
   });
 
-  it('renders an em-dash when currentPct is missing', () => {
+  it('renders em-dashes when currentPct is missing', () => {
     render(MemoryPanel, { props: { memGb: 32 } });
-    expect(screen.getByText(/—/)).toBeInTheDocument();
+    expect(screen.getAllByText(/—/).length).toBeGreaterThan(0);
   });
 });
