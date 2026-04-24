@@ -25,6 +25,7 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/svelte": "^5.2.6",
     "@vitest/ui": "^3.2.4",
+    "eventsource": "^4.1.0",
     "jsdom": "^25.0.1",
     "svelte-check": "^4.1.1",
     "tsx": "^4.19.2",
