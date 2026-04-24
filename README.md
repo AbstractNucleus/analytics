@@ -149,6 +149,26 @@ docker compose -f docker-compose.yml -f docker-compose.override.yml up -d beszel
 
 Visit `http://localhost:5173`.
 
+## What you'll see
+
+Once at least one agent is registered:
+
+- **Fleet view (`/`)** — one row per host: status dot, hostname, OS + arch,
+  uptime, CPU sparkline, memory %, disk %, net in/out, last-seen (pulses
+  amber if the host hasn't reported within ~2x its interval). Rows
+  live-update at ~1 Hz. Click a row to drill in.
+- **Per-host page (`/hosts/[slug]`)** — CPU (% line chart + per-core heatmap
+  + load-avg + PSI when available), memory (used vs. `MemAvailable` area +
+  swap + cache/buffers), disk (per-mount %, IOPS, queue depth, latency),
+  network (per-interface bandwidth, packets/s, errors/drops), temps (CPU /
+  GPU / NVMe sensor grid, pulses amber over threshold), uptime/kernel
+  footer. All charts on the page share a **time-range toggle** (1 h / 24 h /
+  7 d / 30 d) in the layout header — switching it re-requests data for
+  every chart simultaneously.
+- **Theme toggle** — flips `data-theme` between `light` and `dark`; the
+  choice persists in `localStorage`. First load on a fresh profile follows
+  `prefers-color-scheme`.
+
 ## Running tests
 
 The SvelteKit app uses Vitest. At Phase 1 MVP completion the suite is
