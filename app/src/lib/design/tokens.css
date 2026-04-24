@@ -1,0 +1,56 @@
+/* Design tokens for the AbstractNucleus editorial system.
+   Two surfaces (--bg, --sub-alt), three text weights, one accent ("rust"),
+   a two-ring focus state, and motion primitives (125ms default, 400ms
+   spring, 1.2s pulse). Dark palette under [data-theme='dark'], light under
+   [data-theme='light']. :root mirrors the dark palette so first paint does
+   not flash before the theme store attaches data-theme. */
+
+:root {
+  /* Surfaces */
+  --bg: #111111;
+  --sub-alt: #1a1a1a;
+
+  /* Text — color + weight. Regular is the default body value; medium and bold
+     are reserved for metric readouts and headings. */
+  --text-regular: #e6e6e6;
+  --text-medium: #f2f2f2;
+  --text-bold: #ffffff;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-bold: 700;
+
+  /* Accent — rust per the AbstractNucleus editorial palette. */
+  --accent: #c2410c;
+
+  /* Focus — two-ring: inner dark halo to separate from the element, outer
+     accent ring for visibility. Apply as `box-shadow: var(--focus-ring)`. */
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+
+  /* Motion primitives. */
+  --dur-fast: 125ms;
+  --dur-spring: 400ms;
+  --dur-pulse: 1200ms;
+  --ease-default: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-pulse: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme='dark'] {
+  --bg: #111111;
+  --sub-alt: #1a1a1a;
+  --text-regular: #e6e6e6;
+  --text-medium: #f2f2f2;
+  --text-bold: #ffffff;
+  --accent: #c2410c;
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+}
+
+[data-theme='light'] {
+  --bg: #f5f1e8;
+  --sub-alt: #ffffff;
+  --text-regular: #2a2522;
+  --text-medium: #1a1714;
+  --text-bold: #0a0807;
+  --accent: #9a3412;
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+}
