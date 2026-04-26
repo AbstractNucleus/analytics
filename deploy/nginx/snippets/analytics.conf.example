@@ -55,11 +55,22 @@ server {
         proxy_read_timeout 300s;
     }
 
-    # PocketBase realtime: SSE — long-lived response, no buffering.
-    # Future-proofing for browser-side subscriptions; currently realtime
-    # happens server-side inside the SvelteKit container.
-    location /api/realtime {
-        proxy_pass http://<bserver-lan-ip>:<analytics-host-port>;
+    # PocketBase admin UI (served by the Beszel hub at :8090).
+    location /_/ {
+        proxy_pass http://<bserver-lan-ip>:8090;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_http_version 1.1;
+        proxy_read_timeout 300s;
+    }
+
+    # PocketBase REST + realtime. SSE-friendly settings (no buffering, long
+    # read timeout) work for both /api/realtime and normal /api/* calls.
+    location /api/ {
+        proxy_pass http://<bserver-lan-ip>:8090;
         proxy_set_header Host              $host;
         proxy_set_header X-Real-IP         $remote_addr;
         proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
