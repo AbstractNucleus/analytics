@@ -11,27 +11,31 @@ only over the user's Tailscale tailnet via `https://analytics.noelkleen.com`.
  Tailnet client
        │ https://analytics.noelkleen.com
        ▼
- ┌──────────────────────────── bserver (Tailscale) ────────────────────────────┐
- │                                                                             │
- │   Caddy :443  (TLS via Cloudflare DNS-01, bound to TS_IP only)              │
- │      │                                                                      │
- │      ▼                                                                      │
- │   SvelteKit frontend (adapter-node)                                         │
- │      │                                                                      │
- │      ▼                                                                      │
- │   Beszel hub :8090  ◄──── local beszel-agent (host pid/network)             │
- │      ▲                                                                      │
- └──────┼──────────────────────────────────────────────────────────────────────┘
-        │ WebSocket push over the tailnet
-        │
-        ├─── beszel-agent on coco       (Linux, systemd)
-        ├─── beszel-agent on kleen-pc   (Windows, service)
-        └─── beszel-agent on ZacBookPro (Windows, service)
+ ┌────────────────── aserver (Tailscale + LAN) ─────────────────┐
+ │  nginx :443  bound to <aserver-tailnet-ip>                   │
+ │     │  TLS via Let's Encrypt (Cloudflare DNS-01)             │
+ │     └─► <bserver-lan-ip>:${ANALYTICS_HOST_PORT}              │
+ └─────────────────────────┬────────────────────────────────────┘
+                           │ LAN (192.168.x.x)
+                           ▼
+ ┌────────────────── bserver (Docker) ──────────────────────────┐
+ │  SvelteKit frontend (adapter-node)                           │
+ │     ports: ${BSERVER_LAN_IP}:${ANALYTICS_HOST_PORT}:3000     │
+ │     │                                                        │
+ │     ▼                                                        │
+ │  Beszel hub :8090 (PocketBase) ◄── local beszel-agent        │
+ │     ▲                                                        │
+ └─────┼────────────────────────────────────────────────────────┘
+       │ WebSocket push over the tailnet
+       │
+       ├─── beszel-agent on coco       (Linux, systemd)
+       ├─── beszel-agent on kleen-pc   (Windows, service)
+       └─── beszel-agent on ZacBookPro (Windows, service)
 ```
 
-- Caddy terminates TLS and reverse-proxies to the SvelteKit frontend. It binds
-  to bserver's Tailscale IP, so the stack is unreachable over WAN even if DNS
-  leaks.
+- nginx on aserver terminates TLS and reverse-proxies over the LAN to the
+  SvelteKit frontend on bserver. It binds to aserver's Tailscale IP, so the
+  stack is unreachable over WAN even if DNS leaks.
 - The frontend talks to the Beszel hub (PocketBase) over the compose network
   for initial loads and realtime subscriptions.
 - The hub sits on an internal docker network only. Agents reach it over the
@@ -41,32 +45,33 @@ only over the user's Tailscale tailnet via `https://analytics.noelkleen.com`.
 
 - **Tailscale** installed on bserver and on every agent host (and on every
   client device that needs to view the dashboard).
-- **Cloudflare account** with an API token scoped to `Zone.DNS:Edit` on the
-  `noelkleen.com` zone.
-- **DNS A record** `analytics.noelkleen.com` -> `<bserver Tailscale IP>`,
+- **aserver** already runs nginx + certbot with the Cloudflare DNS-01 plugin
+  (from the supabase-server stack). The same machinery handles
+  `analytics.noelkleen.com`.
+- **DNS A record** `analytics.noelkleen.com` -> aserver's Tailscale IP,
   **gray cloud** (DNS-only, proxied mode off — Cloudflare proxying breaks
   tailnet routing).
 - **Docker Engine + Compose v2** on bserver.
 - **Agent hosts** (coco, kleen-pc, ZacBookPro) need only a shell — no Docker.
 
-## First-time setup on bserver
+## First-time setup
+
+### On bserver
 
 ```sh
-git clone https://github.com/AbstractNucleus/analytics.git
-cd analytics/deploy
+git clone https://github.com/AbstractNucleus/analytics.git ~/repos/analytics
+cd ~/repos/analytics/deploy
 cp .env.example .env
 ```
 
 Open `.env` and fill in:
 
-- `BESZEL_VERSION` — already pinned to `0.18.7`; leave as-is unless you know
-  why you're changing it.
-- `CLOUDFLARE_API_TOKEN` — the token from the prereqs.
-- `TS_IP` — bserver's Tailscale IPv4 (`tailscale ip -4`).
-- `PUBLIC_BESZEL_URL` — leave as `http://beszel-hub:8090` for compose-internal
-  use.
-- `BESZEL_AGENT_KEY` and `BESZEL_API_TOKEN` — leave **blank** for now; you fill
-  them after the hub is up. See the note below.
+- `BESZEL_VERSION` — already pinned to `0.18.7`; leave as-is unless you know why.
+- `BSERVER_LAN_IP` — bserver's LAN IPv4 (`ip -4 -br addr show | grep -v lo`).
+- `ANALYTICS_HOST_PORT` — leave at `3001` unless port 3001 is taken on bserver.
+- `BESZEL_AGENT_KEY` — leave **blank** for now; filled after the hub is up.
+- `BESZEL_API_TOKEN` — leave blank; created in PocketBase admin UI later.
+- `PUBLIC_BESZEL_URL` — leave as `http://beszel-hub:8090`.
 
 Bring the stack up:
 
@@ -74,10 +79,52 @@ Bring the stack up:
 docker compose -f docker-compose.yml up -d
 ```
 
+The frontend now listens at `<BSERVER_LAN_IP>:<ANALYTICS_HOST_PORT>` over the LAN. Nothing is reachable from outside the LAN yet — aserver does the TLS / DNS work.
+
+### On aserver
+
+aserver already runs nginx (host install) and has certbot + the Cloudflare DNS-01 plugin from the supabase-server stack. Reuse that machinery:
+
+```sh
+sudo certbot certonly --dns-cloudflare \
+    --dns-cloudflare-credentials /etc/letsencrypt/cloudflare.ini \
+    -d analytics.noelkleen.com
+
+# Copy the vhost snippet from the bserver clone (or scp it across):
+scp bserver:~/repos/analytics/deploy/nginx/snippets/analytics.conf.example /tmp/
+sudo install -o root -g root -m 644 /tmp/analytics.conf.example \
+    /etc/nginx/sites-available/analytics.conf
+sudoedit /etc/nginx/sites-available/analytics.conf
+# Replace: <your-domain>, <bserver-lan-ip>, <analytics-host-port>, <aserver-tailnet-ip>
+
+sudo ln -s /etc/nginx/sites-available/analytics.conf /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+### In Cloudflare
+
+Set the `analytics.noelkleen.com` A record:
+
+- **Value:** aserver's tailnet IP (`tailscale ip -4` on aserver).
+- **Proxy:** DNS only (gray cloud — orange-clouded breaks tailnet routing).
+
+### Verify
+
+From any tailnet client:
+
+```sh
+curl -sI https://analytics.noelkleen.com/
+# Expect: HTTP/2 200, server: nginx/...
+```
+
+Open `https://analytics.noelkleen.com/` in a browser. The "Two-pass bootstrap" section below covers registering the bserver agent.
+
+## Two-pass bootstrap
+
 **Two-pass bootstrap gotcha.** The Beszel hub generates the agent-registration
 public key on first boot, and you cannot know the key ahead of time. So:
 
-1. First `up` brings the hub, frontend, and Caddy online. The local
+1. First `up` brings the hub, frontend online. The local
    `beszel-agent` service will restart-loop until you register it (harmless).
 2. Follow the "Register the bserver agent" section below to grab the public
    key from the hub admin UI.
@@ -91,9 +138,9 @@ public key on first boot, and you cannot know the key ahead of time. So:
 
 The hub admin UI is served by PocketBase at `:8090`.
 
-1. From bserver (before TLS is up, or any time if you want a direct view):
-   `http://<TS_IP>:8090/_/` — or from any tailnet client once Caddy is up:
-   `https://analytics.noelkleen.com/_/`.
+1. From bserver (before the nginx vhost is up, or any time if you want a
+   direct view): `http://<BSERVER_LAN_IP>:8090/_/` — or from any tailnet
+   client once nginx is up: `https://analytics.noelkleen.com/_/`.
 2. Settings -> Systems -> **Add System**.
 3. Enter hostname `bserver`, the system's Tailscale IP, and port `45876`
    (Beszel's default agent-hub port).
@@ -144,13 +191,13 @@ The script downloads the pinned Windows release, installs to
 ## Dev mode
 
 Dev mode swaps the built frontend image for a Vite dev server with `../app`
-bind-mounted for hot reload. Caddy is not used in dev.
+bind-mounted for hot reload.
 
 ```sh
 cd deploy
 cp .env.example .env
 # Minimal dev values: BESZEL_VERSION + any non-empty BESZEL_AGENT_KEY are enough
-# to start the hub + agent. CLOUDFLARE_API_TOKEN and TS_IP are unused in dev.
+# to start the hub + agent. BSERVER_LAN_IP and ANALYTICS_HOST_PORT are unused in dev.
 docker compose -f docker-compose.yml -f docker-compose.override.yml up -d beszel-hub frontend
 ```
 
@@ -201,5 +248,11 @@ pnpm -C app build          # produces app/build/ via adapter-node
 - [docs/plans/2026-04-23-phase-1-mvp-concerns.json](docs/plans/2026-04-23-phase-1-mvp-concerns.json)
   — concern decomposition used to parallelize the build.
 - [docs/patterns/tailnet-https-via-cloudflare.md](docs/patterns/tailnet-https-via-cloudflare.md)
-  — the Caddy + Cloudflare DNS-01 + gray-cloud pattern that makes
-  `https://analytics.noelkleen.com` resolve only over the tailnet.
+  — the tailnet-HTTPS pattern: Let's Encrypt DNS-01 + Cloudflare gray-cloud DNS
+  that makes `https://analytics.noelkleen.com` resolve only over the tailnet.
+- [docs/specs/2026-04-26-nginx-ingress-design.md](docs/specs/2026-04-26-nginx-ingress-design.md)
+  — Phase 2 ingress re-architecture spec.
+- [docs/decisions/2026-04-26-nginx-ingress.md](docs/decisions/2026-04-26-nginx-ingress.md)
+  — decision record for nginx-on-aserver.
+- [docs/plans/2026-04-26-nginx-ingress-plan.md](docs/plans/2026-04-26-nginx-ingress-plan.md)
+  — Phase 2 implementation plan (the file changes you're reading the result of).
