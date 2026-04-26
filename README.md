@@ -68,6 +68,7 @@ Open `.env` and fill in:
 
 - `BESZEL_VERSION` — already pinned to `0.18.7`; leave as-is unless you know why.
 - `BSERVER_LAN_IP` — bserver's LAN IPv4 (`ip -4 -br addr show | grep -v lo`).
+- `BSERVER_TS_IP` — bserver's Tailscale IPv4 (`tailscale ip -4` on bserver).
 - `ANALYTICS_HOST_PORT` — leave at `3001` unless port 3001 is taken on bserver.
 - `BESZEL_AGENT_KEY` — leave **blank** for now; filled after the hub is up.
 - `BESZEL_API_TOKEN` — leave blank; created in PocketBase admin UI later.
@@ -136,17 +137,31 @@ public key on first boot, and you cannot know the key ahead of time. So:
 
 ## Register the bserver agent
 
-The hub admin UI is served by PocketBase at `:8090`.
+Two distinct admin surfaces are served on bserver port 8090:
 
-1. From bserver (before the nginx vhost is up, or any time if you want a
-   direct view): `http://<BSERVER_LAN_IP>:8090/_/` — or from any tailnet
-   client once nginx is up: `https://analytics.noelkleen.com/_/`.
-2. Settings -> Systems -> **Add System**.
-3. Enter hostname `bserver`, the system's Tailscale IP, and port `45876`
+- **PocketBase admin** (`/_/`) — generic database editor for the underlying
+  collections. Reachable via the public URL: `https://analytics.<your-domain>/_/`.
+  Sign in with the superuser created via `beszel superuser upsert <email> <pw>`
+  on the hub container. Use this for low-level maintenance, not for adding
+  systems (the schema requires a `users` row + a `fingerprints` row that the
+  bundled UI generates atomically; raw record creation here won't produce a
+  usable agent key).
+- **Beszel bundled admin** (`/`) — the upstream Beszel UI with the
+  Settings -> Systems -> Add System flow. We replaced the root path on the
+  public URL with our custom dashboard, so this UI is only exposed on the
+  tailnet at `http://<BSERVER_TS_IP>:8090/`. **This is the URL you use to
+  register agents.**
+
+To register `bserver`:
+
+1. From any tailnet client, open `http://<BSERVER_TS_IP>:8090/`.
+2. Sign in (same superuser as above; the bundled UI shares PocketBase's auth).
+3. Settings -> Systems -> **Add System**.
+4. Enter hostname `bserver`, host `<bserver-Tailscale-IP>`, port `45876`
    (Beszel's default agent-hub port).
-4. Beszel generates a public key. Copy it.
-5. Paste it into `deploy/.env` as `BESZEL_AGENT_KEY`.
-6. `docker compose -f docker-compose.yml up -d beszel-agent` to restart the
+5. Beszel generates a public key. Copy it.
+6. Paste it into `deploy/.env` as `BESZEL_AGENT_KEY`.
+7. `docker compose -f docker-compose.yml up -d beszel-agent` to restart the
    local agent with the new key.
 
 Within ~60s, the bserver row appears on the fleet view.
@@ -160,9 +175,10 @@ Within ~60s, the bserver row appears on the fleet view.
 > same metrics under different keys. Leave bserver's compose agent alone; use
 > the scripts below only on coco, kleen-pc, and ZacBookPro.
 
-For each additional agent host, first add the system in the hub admin UI
-(Settings -> Systems -> Add System) to generate that host's public key, then
-run the installer one-liner on the host itself.
+For each additional agent host, first add the system in Beszel's bundled
+admin UI at `http://<BSERVER_TS_IP>:8090/` (Settings -> Systems -> Add System)
+to generate that host's public key, then run the installer one-liner on the
+host itself.
 
 ### Linux (coco)
 

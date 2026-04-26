@@ -8,10 +8,15 @@ services:
   beszel-hub:
     image: henrygd/beszel:${BESZEL_VERSION}
     restart: unless-stopped
-    # Published on bserver's LAN IP so aserver's nginx can reach the
-    # PocketBase admin UI (/_/) and REST/realtime API (/api/) over the LAN.
+    # Published on:
+    #  - ${BSERVER_LAN_IP}:8090 so aserver's nginx can reach /_/ and /api/
+    #    over the LAN for the public analytics.<your-domain> URL.
+    #  - ${BSERVER_TS_IP}:8090  so any tailnet client can reach Beszel's
+    #    bundled admin UI directly (the only place to add new systems —
+    #    the custom SvelteKit dashboard doesn't include that form).
     ports:
       - "${BSERVER_LAN_IP:?BSERVER_LAN_IP must be set in .env}:8090:8090"
+      - "${BSERVER_TS_IP:?BSERVER_TS_IP must be set in .env}:8090:8090"
     volumes:
       - hub-data:/beszel_data
     networks:
