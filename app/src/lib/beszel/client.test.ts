@@ -20,12 +20,14 @@ const getFirstListItemSpy = vi.fn();
 const subscribeSpy = vi.fn();
 const unsubscribeMock = vi.fn();
 const authStoreSaveSpy = vi.fn();
+const autoCancellationSpy = vi.fn();
 
 vi.mock('pocketbase', () => {
   const PocketBase = vi.fn().mockImplementation(function MockPB(this: unknown) {
     Object.assign(this as object, {
       authStore: { save: authStoreSaveSpy },
       collection: collectionSpy,
+      autoCancellation: autoCancellationSpy,
     });
   });
   return { default: PocketBase };
@@ -43,6 +45,7 @@ function resetSpies() {
   subscribeSpy.mockReset();
   unsubscribeMock.mockReset();
   authStoreSaveSpy.mockReset();
+  autoCancellationSpy.mockReset();
 
   collectionSpy.mockImplementation(() => ({
     getFullList: getFullListSpy,
@@ -79,6 +82,11 @@ describe('createClient', () => {
   it('does not touch authStore when no token is provided', () => {
     createClient('http://localhost:8090');
     expect(authStoreSaveSpy).not.toHaveBeenCalled();
+  });
+
+  it('disables PocketBase auto-cancellation so parallel SSR loaders do not abort each other', () => {
+    createClient('http://localhost:8090');
+    expect(autoCancellationSpy).toHaveBeenCalledWith(false);
   });
 
   describe('listSystems', () => {

@@ -52,6 +52,12 @@ const MAX_PER_PAGE = 100_000;
 
 export function createClient(baseUrl: string, apiToken?: string): BeszelClient {
   const pb = new PocketBase(baseUrl);
+  // SSR loaders fan out parallel calls (Promise.all) that, via resolveSystemId,
+  // produce multiple identical getSystem requests. The SDK's default
+  // auto-cancellation keys requests by URL + method, so duplicates abort each
+  // other and the loader catches "request was autocancelled" -> renders 404.
+  // We only use this client server-side, so disable auto-cancellation outright.
+  pb.autoCancellation(false);
   if (apiToken) {
     pb.authStore.save(apiToken);
   }
