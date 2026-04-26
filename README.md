@@ -71,7 +71,10 @@ Open `.env` and fill in:
 - `BSERVER_TS_IP` — bserver's Tailscale IPv4 (`tailscale ip -4` on bserver).
 - `ANALYTICS_HOST_PORT` — leave at `3001` unless port 3001 is taken on bserver.
 - `BESZEL_AGENT_KEY` — leave **blank** for now; filled after the hub is up.
-- `BESZEL_API_TOKEN` — leave blank; created in PocketBase admin UI later.
+- `BESZEL_API_TOKEN` — leave blank for the first `up`; **required** before the
+  dashboard can show any data. The SSR loader uses this token to read the
+  `systems` and `system_stats` collections (which require auth via the
+  collection rules). Generation steps below.
 - `PUBLIC_BESZEL_URL` — leave as `http://beszel-hub:8090`.
 
 Bring the stack up:
@@ -132,8 +135,28 @@ public key on first boot, and you cannot know the key ahead of time. So:
 3. Paste the key into `.env` as `BESZEL_AGENT_KEY`, then
    `docker compose -f docker-compose.yml up -d beszel-agent` to pick up the
    new environment.
-4. (Optional) Create a server-side API token in the PocketBase admin UI and
-   paste it into `.env` as `BESZEL_API_TOKEN`, then `up -d frontend`.
+4. **Required to unblank the dashboard.** The systems collection's listRule
+   requires authentication, so the SSR loader returns nothing until the
+   `BESZEL_API_TOKEN` env var is set. Generate a long-lived token by
+   impersonating the Beszel admin user, then `up -d frontend`:
+
+   ```sh
+   # Replace email + password with the Beszel admin user's credentials
+   # (created automatically the first time you load the bundled UI, OR via the
+   #  superuser API; see "Register the bserver agent" below for both flows).
+   SU_TOKEN=$(curl -s -X POST -H "Content-Type: application/json" \
+     -d '{"identity":"<superuser-email>","password":"<superuser-password>"}' \
+     http://<BSERVER_TS_IP>:8090/api/collections/_superusers/auth-with-password \
+     | jq -r .token)
+   ADMIN_ID=$(curl -s -H "Authorization: $SU_TOKEN" \
+     "http://<BSERVER_TS_IP>:8090/api/collections/users/records?filter=role%3D%22admin%22" \
+     | jq -r '.items[0].id')
+   curl -s -X POST -H "Authorization: $SU_TOKEN" -H "Content-Type: application/json" \
+     -d '{"duration":31536000}' \
+     "http://<BSERVER_TS_IP>:8090/api/collections/users/impersonate/$ADMIN_ID" \
+     | jq -r .token
+   # Paste the printed JWT into .env as BESZEL_API_TOKEN, then up -d frontend.
+   ```
 
 ## Register the bserver agent
 
