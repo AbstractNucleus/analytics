@@ -247,9 +247,6 @@ pnpm -C app build          # produces app/build/ via adapter-node
   — Phase 1 implementation plan (narrative).
 - [docs/plans/2026-04-23-phase-1-mvp-concerns.json](docs/plans/2026-04-23-phase-1-mvp-concerns.json)
   — concern decomposition used to parallelize the build.
-- [docs/patterns/tailnet-https-via-cloudflare.md](docs/patterns/tailnet-https-via-cloudflare.md)
-  — the tailnet-HTTPS pattern: Let's Encrypt DNS-01 + Cloudflare gray-cloud DNS
-  that makes `https://analytics.noelkleen.com` resolve only over the tailnet.
 - [docs/specs/2026-04-26-nginx-ingress-design.md](docs/specs/2026-04-26-nginx-ingress-design.md)
   — Phase 2 ingress re-architecture spec.
 - [docs/decisions/2026-04-26-nginx-ingress.md](docs/decisions/2026-04-26-nginx-ingress.md)

@@ -33,7 +33,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
-      - "${BSERVER_LAN_IP}:${ANALYTICS_HOST_PORT}:3000"
+      - "${BSERVER_LAN_IP:?BSERVER_LAN_IP must be set in .env}:${ANALYTICS_HOST_PORT:?ANALYTICS_HOST_PORT must be set in .env}:3000"
     environment:
       PUBLIC_BESZEL_URL: "${PUBLIC_BESZEL_URL}"
       BESZEL_API_TOKEN: "${BESZEL_API_TOKEN}"
