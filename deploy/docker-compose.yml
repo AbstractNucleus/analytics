@@ -28,7 +28,9 @@ services:
       - /:/hostfs:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
-      HUB_URL: "http://localhost:8090"
+      # Agent runs in network_mode: host, so localhost is bserver's loopback.
+      # The hub publishes only on ${BSERVER_LAN_IP}:8090, so reach it there.
+      HUB_URL: "http://${BSERVER_LAN_IP}:8090"
       KEY: "${BESZEL_AGENT_KEY}"
 
   frontend:
