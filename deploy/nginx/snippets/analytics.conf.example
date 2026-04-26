@@ -1,0 +1,74 @@
+# nginx/snippets/analytics.conf.example
+#
+# Tailnet-only analytics dashboard for analytics.<your-domain>.
+# Lives on aserver. Uses Let's Encrypt cert via DNS-01 (certbot + cloudflare plugin).
+#
+# Install on aserver:
+#   1. Copy to /etc/nginx/sites-available/analytics.conf
+#   2. Edit: replace <your-domain>, <bserver-lan-ip>, <analytics-host-port>, <aserver-tailnet-ip>.
+#   3. ln -s /etc/nginx/sites-available/analytics.conf /etc/nginx/sites-enabled/
+#   4. sudo nginx -t && sudo systemctl reload nginx
+#
+# Prerequisite: certbot DNS-01 cert obtained for analytics.<your-domain>.
+
+server {
+    # Bind to the aserver tailnet IP specifically. The existing site has
+    # `listen 443 ssl;` (wildcard); nginx prefers the more specific match
+    # for connections to this IP, so they coexist safely.
+    listen <aserver-tailnet-ip>:443 ssl;
+    http2 on;
+    server_name analytics.<your-domain>;
+
+    ssl_certificate     /etc/letsencrypt/live/analytics.<your-domain>/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/analytics.<your-domain>/privkey.pem;
+
+    # Inline TLS hardening — mirror of supabase-server's pattern, with the
+    # ssl_trusted_certificate pointing at the LE chain.
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305;
+    ssl_session_timeout 1d;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_tickets off;
+    ssl_stapling on;
+    ssl_stapling_verify on;
+    ssl_trusted_certificate /etc/letsencrypt/live/analytics.<your-domain>/chain.pem;
+    resolver 1.1.1.1 8.8.8.8 valid=300s;
+    resolver_timeout 5s;
+
+    # HSTS — fine here because tailnet-only and you control the clients.
+    add_header Strict-Transport-Security "max-age=31536000" always;
+
+    # NO cloudflare-ips.conf include — analytics is not behind Cloudflare's proxy.
+
+    location / {
+        proxy_pass http://<bserver-lan-ip>:<analytics-host-port>;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_set_header Upgrade           $http_upgrade;
+        proxy_set_header Connection        "upgrade";
+        proxy_http_version 1.1;
+
+        proxy_read_timeout 300s;
+    }
+
+    # PocketBase realtime: SSE — long-lived response, no buffering.
+    # Future-proofing for browser-side subscriptions; currently realtime
+    # happens server-side inside the SvelteKit container.
+    location /api/realtime {
+        proxy_pass http://<bserver-lan-ip>:<analytics-host-port>;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_http_version 1.1;
+        proxy_set_header Connection        "";
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_read_timeout 24h;
+    }
+}

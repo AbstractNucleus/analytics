@@ -1,7 +1,8 @@
-# Analytics stack: Beszel hub + agent, SvelteKit frontend, Caddy.
-# Tailnet-only: Caddy binds 443 to ${TS_IP} (the host's Tailscale IP) and
-# obtains certs via Cloudflare DNS-01, so the stack is not reachable over
-# WAN even if DNS leaks. See docs/ for the tailnet-HTTPS pattern.
+# Analytics stack: Beszel hub + agent, SvelteKit frontend.
+# Tailnet ingress is provided by aserver's nginx (see deploy/nginx/snippets/
+# and the README's "On aserver" section). The frontend is published on
+# ${BSERVER_LAN_IP}:${ANALYTICS_HOST_PORT} so aserver can reverse-proxy over
+# the LAN.
 
 services:
   beszel-hub:
@@ -31,6 +32,8 @@ services:
       context: ../app
       dockerfile: Dockerfile
     restart: unless-stopped
+    ports:
+      - "${BSERVER_LAN_IP:?BSERVER_LAN_IP must be set in .env}:${ANALYTICS_HOST_PORT:?ANALYTICS_HOST_PORT must be set in .env}:3000"
     environment:
       PUBLIC_BESZEL_URL: "${PUBLIC_BESZEL_URL}"
       BESZEL_API_TOKEN: "${BESZEL_API_TOKEN}"
@@ -39,31 +42,8 @@ services:
     depends_on:
       - beszel-hub
 
-  caddy:
-    # Built in-repo via deploy/caddy/Dockerfile (xcaddy + caddy-dns/cloudflare)
-    # so TLS doesn't depend on a third-party community image.
-    build:
-      context: ./caddy
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    ports:
-      - "${TS_IP}:443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy-data:/data
-      - caddy-config:/config
-    environment:
-      TS_IP: "${TS_IP}"
-      CLOUDFLARE_API_TOKEN: "${CLOUDFLARE_API_TOKEN}"
-    networks:
-      - internal
-    depends_on:
-      - frontend
-
 networks:
   internal:
 
 volumes:
   hub-data:
-  caddy-data:
-  caddy-config:
