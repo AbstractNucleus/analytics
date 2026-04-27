@@ -69,7 +69,7 @@
   .cell.full {
     grid-column: 1 / -1;
   }
-  @media (max-width: 720px) {
+  @media (max-width: 900px) {
     .grid {
       grid-template-columns: 1fr;
     }

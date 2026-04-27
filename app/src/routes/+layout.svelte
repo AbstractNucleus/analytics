@@ -42,6 +42,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 0.75rem;
     padding: 0.75rem 1.25rem;
     background: var(--sub-alt);
     border-bottom: 1px solid var(--bg);
@@ -54,5 +55,13 @@
   main {
     flex: 1;
     padding: 1rem 1.25rem;
+  }
+  @media (max-width: 600px) {
+    .top {
+      padding: 0.625rem 0.875rem;
+    }
+    main {
+      padding: 0.75rem 0.875rem;
+    }
   }
 </style>

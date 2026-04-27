@@ -33,6 +33,13 @@
     font-variant-numeric: tabular-nums;
     cursor: pointer;
     transition: color var(--dur-fast) var(--ease-default);
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+  }
+  @media (hover: none) and (pointer: coarse) {
+    button {
+      padding: 0.625rem 1rem;
+    }
   }
   button:hover {
     color: var(--text-bold);
