@@ -2,6 +2,11 @@
   import { onMount } from 'svelte';
   import UPlot from 'uplot';
   import type uPlot from 'uplot';
+  // uPlot ships CSS that absolutely-positions its axes/overlay layers inside
+  // the chart wrapper. Without it the axis labels flow as block elements,
+  // stacking below the canvas and overflowing the panel — visible on Safari
+  // but not Chrome (browser-default position/overflow handling differs).
+  import 'uplot/dist/uPlot.min.css';
 
   type Props = {
     data: uPlot.AlignedData;
