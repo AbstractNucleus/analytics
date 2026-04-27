@@ -22,6 +22,11 @@
   /* Accent — rust per the AbstractNucleus editorial palette. */
   --accent: #c2410c;
 
+  /* Chart — read by canvas via getComputedStyle, so they must be concrete
+     color strings (no var() references that canvas can't resolve). */
+  --chart-axis: #b0b0b0;
+  --chart-grid: rgba(230, 230, 230, 0.10);
+
   /* Focus — two-ring: inner dark halo to separate from the element, outer
      accent ring for visibility. Apply as `box-shadow: var(--focus-ring)`. */
   --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
@@ -43,6 +48,8 @@
   --text-bold: #ffffff;
   --accent: #c2410c;
   --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+  --chart-axis: #b0b0b0;
+  --chart-grid: rgba(230, 230, 230, 0.10);
 }
 
 [data-theme='light'] {
@@ -53,4 +60,6 @@
   --text-bold: #0a0807;
   --accent: #9a3412;
   --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+  --chart-axis: #5a554f;
+  --chart-grid: rgba(42, 37, 34, 0.12);
 }

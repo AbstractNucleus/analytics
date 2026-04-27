@@ -90,4 +90,15 @@ describe('TimeSeries', () => {
     unmount();
     expect(destroyCalls.length).toBeGreaterThanOrEqual(1);
   });
+
+  it('sets a non-empty stroke on each axis so labels are not uPlot default black on a dark surface', () => {
+    render(TimeSeries, { props: { data: DATA_A, series: SERIES, height: 180 } });
+
+    const opts = uplotCalls[0].opts as { axes: Array<{ stroke?: unknown }> };
+    expect(opts.axes).toHaveLength(2);
+    expect(typeof opts.axes[0].stroke).toBe('string');
+    expect((opts.axes[0].stroke as string).length).toBeGreaterThan(0);
+    expect(typeof opts.axes[1].stroke).toBe('string');
+    expect((opts.axes[1].stroke as string).length).toBeGreaterThan(0);
+  });
 });
