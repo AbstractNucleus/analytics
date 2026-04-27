@@ -12,8 +12,15 @@
 
   const { system, latest, lastSeenMs, nowMs }: Props = $props();
 
-  const cpu = $derived(latest?.cpuPct ?? NaN);
-  const mem = $derived(latest?.memPct ?? NaN);
+  function metric(override: number | undefined, fallback: number): number {
+    if (override !== undefined) return override;
+    if (system.status === 'pending') return NaN;
+    if (!Number.isFinite(system.lastSeenMs)) return NaN;
+    return fallback;
+  }
+
+  const cpu = $derived(metric(latest?.cpuPct, system.cpuPct));
+  const mem = $derived(metric(latest?.memPct, system.memPct));
 </script>
 
 <article class="fleet-row" data-slug={system.slug}>

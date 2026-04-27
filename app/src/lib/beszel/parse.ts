@@ -75,6 +75,7 @@ export function parseSystem(raw: unknown): SystemRow {
     agentVersion: str(info.v),
     containerCount: num(info.ct),
     bootTimeOffset: num(info.bb),
+    lastSeenMs: toMs(r.updated),
   };
 }
 
