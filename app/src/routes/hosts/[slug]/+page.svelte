@@ -1,12 +1,14 @@
 <!-- Per-host view: identity strip on top, full-width CPU, a Mem/Disk pair,
-     full-width Network. Memory total / kernel / OS / cpu descriptor come from
-     SystemDetails; disk total comes from the latest StatsSample. -->
+     full-width Network, then a full-width Containers table when the host is
+     reporting containers. Memory total / kernel / OS / cpu descriptor come
+     from SystemDetails; disk total comes from the latest StatsSample. -->
 <script lang="ts">
   import HostMeta from '$lib/panels/HostMeta.svelte';
   import CpuPanel from '$lib/panels/CpuPanel.svelte';
   import MemoryPanel from '$lib/panels/MemoryPanel.svelte';
   import DiskPanel from '$lib/panels/DiskPanel.svelte';
   import NetworkPanel from '$lib/panels/NetworkPanel.svelte';
+  import ContainersPanel from '$lib/panels/ContainersPanel.svelte';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
@@ -47,6 +49,11 @@
       currentSentBps={latest?.netSentBps}
     />
   </div>
+  {#if data.containers.length > 0}
+    <div class="cell full">
+      <ContainersPanel containers={data.containers} />
+    </div>
+  {/if}
 </div>
 
 <style>
