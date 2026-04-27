@@ -198,12 +198,41 @@ Within ~60s, the bserver row appears on the fleet view.
 > same metrics under different keys. Leave bserver's compose agent alone; use
 > the scripts below only on coco, kleen-pc, and ZacBookPro.
 
-For each additional agent host, first add the system in Beszel's bundled
-admin UI at `http://<BSERVER_TS_IP>:8090/` (Settings -> Systems -> Add System)
-to generate that host's public key, then run the installer one-liner on the
-host itself.
+Two registration modes are supported. Pick one and use it consistently across
+all your agent hosts:
+
+#### Mode A: universal token (recommended for fleets that grow over time)
+
+Generate one token in Beszel's bundled UI at `http://<BSERVER_TS_IP>:8090/`
+under **Settings -> Tokens & Fingerprints -> Universal token** (toggle "Active"
+and "Permanent" if you want it to keep working after the first registration).
+The same token works for every host; the agent self-registers on first connect,
+so there is no per-host Add-System click. The hub URL changes from
+`tcp://<host>:45876` (legacy SSH path) to `http://<host>:8090` (the WebSocket
+path the agent uses with a token).
+
+> **Tradeoff.** Universal tokens are bearer credentials — anyone holding the
+> token can register a system under your account. Rotate it (same UI screen)
+> after onboarding a new host on a less-trusted machine, or stick with Mode B
+> below if that's a concern.
+
+#### Mode B: per-system key (one Add-System click per host)
+
+Add the system in Beszel's bundled admin UI at `http://<BSERVER_TS_IP>:8090/`
+(Settings -> Systems -> Add System) to generate that host's public key, then
+run the installer one-liner with the `--key=` / `-Key` flag on the host itself.
+Each key is bound to one specific host.
 
 ### Linux (coco)
+
+Universal-token mode:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/AbstractNucleus/analytics/main/deploy/agent-install/linux-systemd.sh \
+  | sudo bash -s -- --hub=http://<bserver-TS-IP>:8090 --token=<universal-token>
+```
+
+Per-system-key mode:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/AbstractNucleus/analytics/main/deploy/agent-install/linux-systemd.sh \
@@ -216,7 +245,14 @@ registers a systemd unit. Works on Ubuntu, Arch, and Raspberry Pi OS.
 
 ### Windows (kleen-pc, ZacBookPro)
 
-From an **elevated** PowerShell:
+From an **elevated** PowerShell. Universal-token mode:
+
+```powershell
+iwr -useb https://raw.githubusercontent.com/AbstractNucleus/analytics/main/deploy/agent-install/windows-install.ps1 -OutFile C:\install-beszel.ps1
+C:\install-beszel.ps1 -Hub http://<bserver-TS-IP>:8090 -Token <universal-token>
+```
+
+Per-system-key mode:
 
 ```powershell
 iwr -useb https://raw.githubusercontent.com/AbstractNucleus/analytics/main/deploy/agent-install/windows-install.ps1 -OutFile C:\install-beszel.ps1
@@ -225,7 +261,8 @@ C:\install-beszel.ps1 -Hub tcp://<bserver-TS-IP>:45876 -Key <agent-public-key>
 
 The script downloads the pinned Windows release, installs to
 `C:\Program Files\Beszel\beszel-agent.exe`, registers a Windows service named
-`beszel-agent` with `HUB_URL` and `KEY` in its environment, and starts it.
+`beszel-agent` with `HUB_URL` plus the chosen `KEY` and/or `TOKEN` in its
+environment, and starts it.
 
 ## Dev mode
 

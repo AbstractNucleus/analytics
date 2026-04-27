@@ -12,24 +12,34 @@
     built-in Expand-Archive cmdlet (PowerShell 5.0+) to unpack the release zip.
 
 .PARAMETER Hub
-    URL or tcp://host:port of the Beszel hub. Passed to the agent as the HUB_URL
-    environment variable.
+    URL of the Beszel hub. For universal-token mode use http://host:8090; for
+    legacy per-system-key mode use tcp://host:45876. Passed as HUB_URL.
+
+.PARAMETER Token
+    Universal token from the hub UI (Settings -> Tokens & Fingerprints ->
+    Universal token). The same token works for every host; the agent
+    self-registers on first connect. Passed as TOKEN. Either -Token or -Key
+    is required.
 
 .PARAMETER Key
-    Public key the hub will use to authenticate this agent. Obtained from the
-    Beszel hub admin UI. Passed as KEY.
+    Per-system public key from the hub UI (Settings -> Systems -> Add System),
+    bound to this one host. Passed as KEY. Either -Token or -Key is required.
 
 .PARAMETER Help
     Show usage and exit 0.
 
 .EXAMPLE
-    # PowerShell-native invocation (recommended on Windows):
+    # Universal-token mode (recommended):
+    .\windows-install.ps1 -Hub http://hub.example:8090 -Token <universal-token>
+
+.EXAMPLE
+    # Legacy per-system-key mode:
     .\windows-install.ps1 -Hub tcp://hub.example:45876 -Key <agent-public-key>
 
 .EXAMPLE
     # UNIX-style long args are NOT accepted natively by PowerShell. The Linux
-    # equivalent --hub=<url> --key=<key> must be translated to -Hub / -Key when
-    # running the Windows installer.
+    # equivalent --hub=<url> --token=<token> must be translated to -Hub / -Token
+    # when running the Windows installer.
 #>
 
 # -----------------------------------------------------------------------------
@@ -45,6 +55,7 @@
 param(
     [string]$Hub,
     [string]$Key,
+    [string]$Token,
     [switch]$Help
 )
 
@@ -54,17 +65,26 @@ $BeszelVersion = "0.18.7"
 
 function Write-Usage {
     $msg = @'
-Usage: windows-install.ps1 -Hub <HUB_URL> -Key <AGENT_PUBLIC_KEY> [-Help]
+Usage: windows-install.ps1 -Hub <HUB_URL> (-Token <TOKEN> | -Key <PUBLIC_KEY>) [-Help]
 
 Installs the Beszel agent to 'C:\Program Files\Beszel\beszel-agent.exe' and
 registers a Windows service named 'beszel-agent' (display name "Beszel Agent",
 start=auto), then starts it.
 
 Required parameters:
-  -Hub <HUB_URL>       URL or tcp://host:port of the Beszel hub. Passed to the
-                       agent as the HUB_URL environment variable.
-  -Key <PUBLIC_KEY>    Public key the hub will use to authenticate this agent.
-                       Obtained from the Beszel hub admin UI. Passed as KEY.
+  -Hub <HUB_URL>       URL of the Beszel hub.
+                       For universal-token mode, use http://host:8090.
+                       For legacy per-system-key mode, use tcp://host:45876.
+                       Passed to the agent as the HUB_URL environment variable.
+
+  At least one of:
+  -Token <TOKEN>       Universal token from the hub UI (Settings -> Tokens &
+                       Fingerprints -> Universal token). Same token works for
+                       every host; the agent self-registers on first connect.
+                       Passed as TOKEN.
+  -Key <PUBLIC_KEY>    Per-system public key from the hub UI (Settings ->
+                       Systems -> Add System), bound to this one host.
+                       Passed as KEY.
 
 Options:
   -Help                Show this message and exit.
@@ -87,7 +107,7 @@ if ($Help) {
 }
 
 # ------------------------------- arg validation -----------------------------
-if ([string]::IsNullOrEmpty($Hub) -and [string]::IsNullOrEmpty($Key)) {
+if ([string]::IsNullOrEmpty($Hub) -and [string]::IsNullOrEmpty($Key) -and [string]::IsNullOrEmpty($Token)) {
     Write-Usage
     exit 2
 }
@@ -96,9 +116,9 @@ if ([string]::IsNullOrEmpty($Hub)) {
     Write-Usage
     Die "-Hub is required"
 }
-if ([string]::IsNullOrEmpty($Key)) {
+if ([string]::IsNullOrEmpty($Key) -and [string]::IsNullOrEmpty($Token)) {
     Write-Usage
-    Die "-Key is required"
+    Die "either -Token or -Key is required"
 }
 
 # Mirror the Linux script's sanity check: reject newlines, quotes, and
@@ -108,6 +128,9 @@ if ($Hub -match '[\r\n"\\]') {
 }
 if ($Key -match '[\r\n"\\]') {
     Die "-Key contains disallowed characters (newline, quote, backslash)"
+}
+if ($Token -match '[\r\n"\\]') {
+    Die "-Token contains disallowed characters (newline, quote, backslash)"
 }
 
 # ----------------------------- pre-flight checks ----------------------------
@@ -203,7 +226,9 @@ try {
     if (-not (Test-Path $svcKey)) {
         Die "service registry key not found at $svcKey after sc.exe create"
     }
-    $envEntries = @("HUB_URL=$Hub", "KEY=$Key")
+    $envEntries = @("HUB_URL=$Hub")
+    if (-not [string]::IsNullOrEmpty($Key))   { $envEntries += "KEY=$Key" }
+    if (-not [string]::IsNullOrEmpty($Token)) { $envEntries += "TOKEN=$Token" }
     New-ItemProperty -Path $svcKey -Name 'Environment' -PropertyType MultiString -Value $envEntries -Force | Out-Null
 
     Write-Host "Starting beszel-agent service"
