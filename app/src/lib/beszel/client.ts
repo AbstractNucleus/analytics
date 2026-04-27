@@ -14,7 +14,6 @@ import type {
   SystemDetails,
   SystemRow,
   TimeRange,
-  Unsubscribe,
 } from './types';
 
 export interface BeszelClient {
@@ -24,8 +23,6 @@ export interface BeszelClient {
   getRecentStats(slug: HostSlug, range: TimeRange): Promise<StatsSample[]>;
   getRecentContainerStats(slug: HostSlug, range: TimeRange): Promise<ContainerStatsSample[]>;
   listContainers(slug: HostSlug): Promise<ContainerRow[]>;
-  subscribeStats(slug: HostSlug, handler: (sample: StatsSample) => void): Promise<Unsubscribe>;
-  subscribeFleet(handler: (sample: StatsSample) => void): Promise<Unsubscribe>;
 }
 
 const RANGE_MS: Record<TimeRange, number> = {
@@ -118,36 +115,6 @@ export function createClient(baseUrl: string, apiToken?: string): BeszelClient {
     return (raw as unknown[]).map(parseContainer);
   }
 
-  async function subscribeStats(
-    slug: HostSlug,
-    handler: (sample: StatsSample) => void,
-  ): Promise<Unsubscribe> {
-    const systemId = await resolveSystemId(slug);
-    const unsub = await pb.collection('system_stats').subscribe(
-      '*',
-      (data: { action: string; record: unknown }) => {
-        handler(parseStatsSample(data.record));
-      },
-      { filter: `system = '${escapeFilterValue(systemId)}'` },
-    );
-    return () => {
-      void unsub();
-    };
-  }
-
-  async function subscribeFleet(
-    handler: (sample: StatsSample) => void,
-  ): Promise<Unsubscribe> {
-    const unsub = await pb
-      .collection('system_stats')
-      .subscribe('*', (data: { action: string; record: unknown }) => {
-        handler(parseStatsSample(data.record));
-      });
-    return () => {
-      void unsub();
-    };
-  }
-
   return {
     listSystems,
     getSystem,
@@ -155,7 +122,5 @@ export function createClient(baseUrl: string, apiToken?: string): BeszelClient {
     getRecentStats,
     getRecentContainerStats,
     listContainers,
-    subscribeStats,
-    subscribeFleet,
   };
 }

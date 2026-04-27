@@ -4,7 +4,6 @@ import systemDetailsFixture from '../../../tests/fixtures/system_details.json';
 import systemStatsFixture from '../../../tests/fixtures/system_stats.json';
 import containersFixture from '../../../tests/fixtures/containers.json';
 import containerStatsFixture from '../../../tests/fixtures/container_stats.json';
-import realtimeEventFixture from '../../../tests/fixtures/realtime-event.json';
 
 const rawSystem = systemsFixture[0] as Record<string, unknown>;
 const SYSTEM_ID = rawSystem.id as string;
@@ -17,8 +16,6 @@ const getFullListSpy = vi.fn();
 const getListSpy = vi.fn();
 const getOneSpy = vi.fn();
 const getFirstListItemSpy = vi.fn();
-const subscribeSpy = vi.fn();
-const unsubscribeMock = vi.fn();
 const authStoreSaveSpy = vi.fn();
 const autoCancellationSpy = vi.fn();
 
@@ -42,8 +39,6 @@ function resetSpies() {
   getListSpy.mockReset();
   getOneSpy.mockReset();
   getFirstListItemSpy.mockReset();
-  subscribeSpy.mockReset();
-  unsubscribeMock.mockReset();
   authStoreSaveSpy.mockReset();
   autoCancellationSpy.mockReset();
 
@@ -52,9 +47,7 @@ function resetSpies() {
     getList: getListSpy,
     getOne: getOneSpy,
     getFirstListItem: getFirstListItemSpy,
-    subscribe: subscribeSpy,
   }));
-  subscribeSpy.mockResolvedValue(unsubscribeMock);
 }
 
 describe('createClient', () => {
@@ -70,8 +63,6 @@ describe('createClient', () => {
     expect(typeof client.getRecentStats).toBe('function');
     expect(typeof client.getRecentContainerStats).toBe('function');
     expect(typeof client.listContainers).toBe('function');
-    expect(typeof client.subscribeStats).toBe('function');
-    expect(typeof client.subscribeFleet).toBe('function');
   });
 
   it('saves the api token on the authStore when provided', () => {
@@ -180,50 +171,6 @@ describe('createClient', () => {
       const [opts] = getFullListSpy.mock.calls[0];
       expect(opts.filter).toContain(`system = '${SYSTEM_ID}'`);
       expect(rows).toHaveLength(containersFixture.length);
-    });
-  });
-
-  describe('subscribeStats', () => {
-    it('subscribes with a filter limiting events to the host and forwards parsed samples', async () => {
-      getFirstListItemSpy.mockResolvedValue(rawSystem);
-      const client = createClient('http://localhost:8090');
-      const handler = vi.fn();
-      const unsub = await client.subscribeStats(SYSTEM_HOST, handler);
-
-      expect(collectionSpy).toHaveBeenCalledWith('system_stats');
-      expect(subscribeSpy).toHaveBeenCalled();
-      const [topicArg, cbArg, optsArg] = subscribeSpy.mock.calls[0];
-      expect(topicArg).toBe('*');
-      expect(optsArg?.filter ?? '').toContain(`system = '${SYSTEM_ID}'`);
-
-      cbArg({ action: 'create', record: realtimeEventFixture.record });
-      expect(handler).toHaveBeenCalledTimes(1);
-      expect(handler.mock.calls[0][0]).toMatchObject({ systemId: SYSTEM_ID });
-
-      expect(typeof unsub).toBe('function');
-      unsub();
-      expect(unsubscribeMock).toHaveBeenCalled();
-    });
-  });
-
-  describe('subscribeFleet', () => {
-    it('subscribes to all system_stats events and forwards parsed samples unfiltered', async () => {
-      const client = createClient('http://localhost:8090');
-      const handler = vi.fn();
-      const unsub = await client.subscribeFleet(handler);
-
-      expect(collectionSpy).toHaveBeenCalledWith('system_stats');
-      expect(subscribeSpy).toHaveBeenCalled();
-      const [topicArg, cbArg] = subscribeSpy.mock.calls[0];
-      expect(topicArg).toBe('*');
-
-      cbArg({ action: 'update', record: realtimeEventFixture.record });
-      expect(handler).toHaveBeenCalledWith(
-        expect.objectContaining({ systemId: SYSTEM_ID }),
-      );
-
-      unsub();
-      expect(unsubscribeMock).toHaveBeenCalled();
     });
   });
 });
