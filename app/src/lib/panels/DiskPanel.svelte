@@ -1,18 +1,33 @@
-<!-- Current disk usage % plus a used-of-total GB readout when total is known. -->
+<!-- Current disk usage % plus used-of-total GB and a usage sparkline. -->
 <script lang="ts">
+  import { TimeSeries } from '$lib/chart';
   import { formatPercent, formatTabular } from '$lib/format';
+  import type { StatsSample } from '$lib/beszel';
 
   type Props = {
     currentPct?: number;
     diskTotalGb?: number;
+    samples?: StatsSample[];
+    height?: number;
   };
 
-  const { currentPct, diskTotalGb }: Props = $props();
+  const { currentPct, diskTotalGb, samples = [], height = 120 }: Props = $props();
 
   const pct = $derived(currentPct ?? NaN);
   const used = $derived(
     diskTotalGb !== undefined && Number.isFinite(pct) ? (pct / 100) * diskTotalGb : NaN
   );
+  const hasChart = $derived(samples.length > 1);
+
+  const data = $derived<[number[], number[]]>([
+    samples.map((s) => Math.floor(s.timestamp / 1000)),
+    samples.map((s) => s.diskPct)
+  ]);
+
+  const series = [
+    {},
+    { label: 'Disk', stroke: 'var(--accent)', fill: 'rgba(194, 65, 12, 0.18)', width: 2 }
+  ];
 </script>
 
 <section class="panel" aria-label="Disk">
@@ -27,30 +42,40 @@
       <span class="total">{formatTabular(diskTotalGb, { decimals: 0, suffix: 'GB' })}</span>
     </p>
   {/if}
+  {#if hasChart}
+    <TimeSeries {data} {series} {height} yRange={[0, 100]} formatY={(v) => formatPercent(v, 0)} />
+  {/if}
 </section>
 
 <style>
   .panel {
     background: var(--sub-alt);
-    padding: 0.75rem 1rem;
+    padding: 0.875rem 1rem 1rem;
     color: var(--text-regular);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
   }
   header {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    margin-bottom: 0.25rem;
   }
   h3 {
     font-weight: var(--weight-medium);
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
     margin: 0;
     color: var(--text-medium);
+    opacity: 0.8;
   }
   .readout {
     font-weight: var(--weight-bold);
     color: var(--text-bold);
     font-variant-numeric: tabular-nums;
+    font-size: 1.375rem;
+    line-height: 1;
   }
   .sub {
     margin: 0;
@@ -59,6 +84,6 @@
     font-size: 0.875rem;
   }
   .sep {
-    opacity: 0.6;
+    opacity: 0.5;
   }
 </style>
