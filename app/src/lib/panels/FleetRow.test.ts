@@ -32,9 +32,30 @@ describe('FleetRow', () => {
     expect(screen.getByText(new RegExp(`${LATEST.memPct.toFixed(1)}%`))).toBeInTheDocument();
   });
 
-  it('renders em-dashes when no latest stat is available', () => {
+  it('falls back to system.cpuPct/memPct when latest is not provided', () => {
     render(FleetRow, { props: { system: SYSTEM } });
     expect(screen.getByText(SYSTEM.name)).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(`${SYSTEM.cpuPct.toFixed(1)}%`))).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(`${SYSTEM.memPct.toFixed(1)}%`))).toBeInTheDocument();
+  });
+
+  it('uses latest sample when both latest and system metrics are present', () => {
+    // Build a sample whose values clearly differ from the system's static info.
+    const overriding: typeof LATEST = { ...LATEST, cpuPct: 88.5, memPct: 12.5 };
+    render(FleetRow, { props: { system: SYSTEM, latest: overriding } });
+    expect(screen.getByText(/88\.5%/)).toBeInTheDocument();
+    expect(screen.getByText(/12\.5%/)).toBeInTheDocument();
+  });
+
+  it('renders em-dashes for a pending system that has never reported', () => {
+    const pending: typeof SYSTEM = {
+      ...SYSTEM,
+      status: 'pending',
+      cpuPct: 0,
+      memPct: 0,
+      lastSeenMs: NaN,
+    };
+    render(FleetRow, { props: { system: pending } });
     expect(screen.getAllByText(/—/).length).toBeGreaterThan(0);
   });
 });
