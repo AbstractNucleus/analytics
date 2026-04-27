@@ -41,7 +41,20 @@ describe('parseSystem', () => {
       agentVersion: rawSystemInfo.v,
       containerCount: rawSystemInfo.ct,
       bootTimeOffset: rawSystemInfo.bb,
+      lastSeenMs: new Date(String(rawSystem.updated).replace(' ', 'T')).getTime(),
     });
+  });
+
+  it('parses lastSeenMs from the `updated` PocketBase column', () => {
+    const updatedAt = '2026-04-24 12:00:00.000Z';
+    const row = parseSystem({ ...rawSystem, updated: updatedAt });
+    expect(row.lastSeenMs).toBe(new Date(updatedAt.replace(' ', 'T')).getTime());
+  });
+
+  it('returns NaN for lastSeenMs when `updated` is missing', () => {
+    const { updated, ...withoutUpdated } = rawSystem as Record<string, unknown>;
+    const row = parseSystem(withoutUpdated);
+    expect(Number.isNaN(row.lastSeenMs)).toBe(true);
   });
 
   it('coerces the string port to a number', () => {
