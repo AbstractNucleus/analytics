@@ -34,6 +34,12 @@ export interface SystemRow {
    * not currently surface it.
    */
   bootTimeOffset: number;
+  /**
+   * Wall-clock timestamp (ms since epoch) of the most recent agent push the
+   * hub has seen for this system. Sourced from PocketBase's auto-tracked
+   * `updated` column on the `systems` row.
+   */
+  lastSeenMs: number;
 }
 
 /**
