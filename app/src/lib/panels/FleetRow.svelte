@@ -43,16 +43,18 @@
     grid-template-columns: auto 1fr auto auto auto;
     align-items: center;
     gap: 1rem;
-    padding: 0.5rem 1rem;
+    padding: 0.625rem 1rem;
     background: var(--sub-alt);
     color: var(--text-regular);
     font-variant-numeric: tabular-nums;
+    min-height: 2.75rem;
   }
   .status-dot {
     width: 0.55rem;
     height: 0.55rem;
     border-radius: 50%;
     background: var(--text-regular);
+    flex-shrink: 0;
   }
   .status-dot[data-status='up'] {
     background: var(--accent);
@@ -71,6 +73,10 @@
   .name {
     font-weight: var(--weight-medium);
     color: var(--text-bold);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .metric .k {
     font-size: 0.7rem;
@@ -86,5 +92,22 @@
     font-size: 0.8rem;
     color: var(--text-regular);
     opacity: 0.8;
+    white-space: nowrap;
+  }
+  @media (max-width: 520px) {
+    .fleet-row {
+      grid-template-columns: auto 1fr auto auto;
+      gap: 0.625rem;
+      padding: 0.625rem 0.75rem;
+    }
+    .last-seen {
+      grid-column: 2 / -1;
+      font-size: 0.75rem;
+      opacity: 0.7;
+      padding-top: 0.125rem;
+    }
+    .metric .k {
+      display: none;
+    }
   }
 </style>

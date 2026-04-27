@@ -94,6 +94,8 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    flex-wrap: wrap;
+    row-gap: 0.25rem;
   }
   h1 {
     margin: 0;
@@ -101,6 +103,8 @@
     font-weight: var(--weight-bold);
     color: var(--text-bold);
     letter-spacing: 0.02em;
+    overflow-wrap: anywhere;
+    min-width: 0;
   }
   .status-dot {
     width: 0.65rem;
@@ -145,6 +149,29 @@
   }
   .props > div.span2 {
     grid-column: span 2;
+  }
+  @media (max-width: 600px) {
+    .meta {
+      padding: 0.875rem 1rem 1rem;
+    }
+    h1 {
+      font-size: 1.125rem;
+    }
+    .props {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.5rem 1rem;
+    }
+    .props > div.span2 {
+      grid-column: span 2;
+    }
+  }
+  @media (max-width: 360px) {
+    .props {
+      grid-template-columns: 1fr;
+    }
+    .props > div.span2 {
+      grid-column: auto;
+    }
   }
   dt {
     font-size: 0.7rem;
