@@ -219,7 +219,7 @@ try {
         New-Item -ItemType Directory -Force -Path $installDir | Out-Null
     }
 
-    # ---------------------------- NSSM download -----------------------------
+    # ---------------------------- NSSM download or reuse --------------------
     # beszel-agent.exe is a plain CLI, not a Windows-service-aware binary.
     # Calling sc.exe create on it directly leads to ERROR_SERVICE_REQUEST_TIMEOUT
     # (1053) on start because the binary never replies to the Service Control
@@ -227,24 +227,34 @@ try {
     # Beszel's own installer does the same thing, just installs NSSM via
     # scoop/winget; we bundle it into the install dir so there's no package
     # manager dependency.
-    $nssmZip = Join-Path $tmpDir 'nssm.zip'
-    $nssmUrl = "https://nssm.cc/release/nssm-${NssmVersion}.zip"
-    Write-Host "Downloading $nssmUrl"
-    $oldProgress = $ProgressPreference
-    $ProgressPreference = 'SilentlyContinue'
-    try {
-        Invoke-WebRequest -Uri $nssmUrl -OutFile $nssmZip -UseBasicParsing
-    } finally {
-        $ProgressPreference = $oldProgress
-    }
-    if (-not (Test-Path $nssmZip)) { Die "failed to download $nssmUrl" }
+    #
+    # If nssm.exe is already at the install path from a prior run, reuse it
+    # — nssm.cc is occasionally 503 (a re-install hit it the first time this
+    # block was tested) and we don't want a transient upstream outage to
+    # break otherwise-fine re-runs.
+    if (Test-Path $nssmExe) {
+        Write-Host "Reusing existing $nssmExe (skipping nssm.cc download)"
+        $nssmSrc = $nssmExe
+    } else {
+        $nssmZip = Join-Path $tmpDir 'nssm.zip'
+        $nssmUrl = "https://nssm.cc/release/nssm-${NssmVersion}.zip"
+        Write-Host "Downloading $nssmUrl"
+        $oldProgress = $ProgressPreference
+        $ProgressPreference = 'SilentlyContinue'
+        try {
+            Invoke-WebRequest -Uri $nssmUrl -OutFile $nssmZip -UseBasicParsing
+        } finally {
+            $ProgressPreference = $oldProgress
+        }
+        if (-not (Test-Path $nssmZip)) { Die "failed to download $nssmUrl" }
 
-    Write-Host "Extracting nssm.exe"
-    Expand-Archive -Path $nssmZip -DestinationPath $tmpDir -Force
-    $nssmArch = if ($arch -eq 'amd64') { 'win64' } else { 'win64' }  # NSSM 2.24 ships only win32/win64; arm64 runs win64 under emulation
-    $nssmSrc  = Join-Path $tmpDir "nssm-${NssmVersion}\${nssmArch}\nssm.exe"
-    if (-not (Test-Path $nssmSrc)) {
-        Die "expected nssm.exe at $nssmSrc after extracting $nssmUrl"
+        Write-Host "Extracting nssm.exe"
+        Expand-Archive -Path $nssmZip -DestinationPath $tmpDir -Force
+        $nssmArch = if ($arch -eq 'amd64') { 'win64' } else { 'win64' }  # NSSM 2.24 ships only win32/win64; arm64 runs win64 under emulation
+        $nssmSrc  = Join-Path $tmpDir "nssm-${NssmVersion}\${nssmArch}\nssm.exe"
+        if (-not (Test-Path $nssmSrc)) {
+            Die "expected nssm.exe at $nssmSrc after extracting $nssmUrl"
+        }
     }
 
     # --------------------- existing service cleanup -------------------------
@@ -269,7 +279,9 @@ try {
     # ------------------------- install binaries -----------------------------
     Write-Host "Installing to $installExe"
     Copy-Item -Path $extractedExe -Destination $installExe -Force
-    Copy-Item -Path $nssmSrc      -Destination $nssmExe    -Force
+    if ($nssmSrc -ne $nssmExe) {
+        Copy-Item -Path $nssmSrc -Destination $nssmExe -Force
+    }
 
     # ---------------------- service registration via NSSM -------------------
     Write-Host "Registering beszel-agent service via NSSM"
