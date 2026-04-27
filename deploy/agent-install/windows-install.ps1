@@ -15,22 +15,34 @@
     URL of the Beszel hub. For universal-token mode use http://host:8090; for
     legacy per-system-key mode use tcp://host:45876. Passed as HUB_URL.
 
-.PARAMETER Token
-    Universal token from the hub UI (Settings -> Tokens & Fingerprints ->
-    Universal token). The same token works for every host; the agent
-    self-registers on first connect. Passed as TOKEN. Either -Token or -Key
-    is required.
-
 .PARAMETER Key
-    Per-system public key from the hub UI (Settings -> Systems -> Add System),
-    bound to this one host. Passed as KEY. Either -Token or -Key is required.
+    REQUIRED in both modes. The agent always starts an SSH listener (so the
+    hub can connect in for command channels) and needs an SSH public key to
+    authenticate the hub against.
+
+    - Universal-token mode: paste the hub's UNIVERSAL SSH public key from the
+      bundled UI (Settings -> Tokens & Fingerprints displays the install
+      command with the right value, or hit GET /api/beszel/getkey while
+      logged in). The same key value is used by every agent.
+    - Per-system-key mode: paste the per-system public key shown after
+      clicking Add System for this host.
+
+    Passed as KEY.
+
+.PARAMETER Token
+    Optional. Universal token from the hub UI (Settings -> Tokens &
+    Fingerprints -> Universal token). When set, the agent connects out via
+    WebSocket to HUB_URL on first start and self-registers, so there is no
+    Add-System click required for new hosts. Passed as TOKEN.
 
 .PARAMETER Help
     Show usage and exit 0.
 
 .EXAMPLE
-    # Universal-token mode (recommended):
-    .\windows-install.ps1 -Hub http://hub.example:8090 -Token <universal-token>
+    # Universal-token mode (recommended for fleets that grow over time):
+    .\windows-install.ps1 -Hub http://hub.example:8090 `
+                          -Key  "ssh-ed25519 AAAA..." `
+                          -Token <universal-token>
 
 .EXAMPLE
     # Legacy per-system-key mode:
@@ -71,28 +83,31 @@ $NssmVersion = "2.24"
 
 function Write-Usage {
     $msg = @'
-Usage: windows-install.ps1 -Hub <HUB_URL> (-Token <TOKEN> | -Key <PUBLIC_KEY>) [-Help]
+Usage: windows-install.ps1 -Hub <HUB_URL> -Key <SSH_PUBLIC_KEY> [-Token <TOKEN>] [-Help]
 
-Installs the Beszel agent to 'C:\Program Files\Beszel\beszel-agent.exe' and
-registers a Windows service named 'beszel-agent' (display name "Beszel Agent",
-start=auto), then starts it.
+Installs the Beszel agent to 'C:\Program Files\Beszel\beszel-agent.exe', wraps
+it as a Windows service named 'beszel-agent' via a bundled NSSM 2.24, and
+starts it.
 
 Required parameters:
-  -Hub <HUB_URL>       URL of the Beszel hub.
-                       For universal-token mode, use http://host:8090.
-                       For legacy per-system-key mode, use tcp://host:45876.
-                       Passed to the agent as the HUB_URL environment variable.
-
-  At least one of:
-  -Token <TOKEN>       Universal token from the hub UI (Settings -> Tokens &
-                       Fingerprints -> Universal token). Same token works for
-                       every host; the agent self-registers on first connect.
-                       Passed as TOKEN.
-  -Key <PUBLIC_KEY>    Per-system public key from the hub UI (Settings ->
-                       Systems -> Add System), bound to this one host.
+  -Hub <HUB_URL>       URL of the Beszel hub. Use http://host:8090 in token
+                       mode, tcp://host:45876 in per-system-key mode. Passed
+                       as HUB_URL.
+  -Key <PUBLIC_KEY>    SSH public key the agent uses to authenticate the hub.
+                       In universal-token mode, this is the hub's universal
+                       key (same value for every agent; see the bundled UI's
+                       Tokens & Fingerprints page). In per-system-key mode,
+                       this is the per-host key shown after Add System.
                        Passed as KEY.
 
-Options:
+Optional:
+  -Token <TOKEN>       Universal token from the hub UI (Settings -> Tokens
+                       & Fingerprints -> Universal token). When set, the
+                       agent self-registers via WebSocket on first start, so
+                       you don't need an Add-System click for this host.
+                       Passed as TOKEN.
+
+Other:
   -Help                Show this message and exit.
 
 Run from an elevated PowerShell (Administrator). Uses Expand-Archive
@@ -122,9 +137,12 @@ if ([string]::IsNullOrEmpty($Hub)) {
     Write-Usage
     Die "-Hub is required"
 }
-if ([string]::IsNullOrEmpty($Key) -and [string]::IsNullOrEmpty($Token)) {
+# -Key is required even in universal-token mode: the agent always starts an
+# SSH listener and needs a public key to authenticate the hub against. Beszel
+# 0.18 has no flag to disable the listener.
+if ([string]::IsNullOrEmpty($Key)) {
     Write-Usage
-    Die "either -Token or -Key is required"
+    Die "-Key is required (the hub's SSH public key, used by the agent's listener to authenticate the hub)"
 }
 
 # Mirror the Linux script's sanity check: reject newlines, quotes, and

@@ -4,15 +4,23 @@
 #
 # Designed to be fetched directly from GitHub and piped to a shell.
 #
-# Universal-token mode (recommended; one token shared by every host):
+# Universal-token mode (recommended; agent self-registers on first connect):
 #
 #   curl -fsSL https://raw.githubusercontent.com/<owner>/analytics/main/\
 #     deploy/agent-install/linux-systemd.sh \
-#     | sudo bash -s -- --hub=http://hub.example:8090 --token=<universal-token>
+#     | sudo bash -s -- --hub=http://hub.example:8090 \
+#                       --key='ssh-ed25519 AAAA...(hub's universal SSH key)' \
+#                       --token=<universal-token>
 #
 # Per-system-key mode (legacy; one key per host, generated via Add System):
 #
-#   curl -fsSL ... | sudo bash -s -- --hub=tcp://hub.example:45876 --key=<agent-public-key>
+#   curl -fsSL ... | sudo bash -s -- --hub=tcp://hub.example:45876 \
+#                                    --key=<per-system-public-key>
+#
+# --key is REQUIRED in both modes: the agent always starts an SSH listener and
+# needs a public key to authenticate the hub against (Beszel 0.18 has no flag
+# to disable the listener). In token mode the same hub-wide key is shared by
+# every agent.
 #
 # Works on Ubuntu, Arch Linux, and Raspberry Pi OS without apt/pacman deps.
 # Requires: curl, tar, systemd, root (uid 0) to write /etc/systemd and /usr/local/bin.
@@ -32,7 +40,7 @@ BESZEL_VERSION="0.18.7"
 
 usage() {
     cat <<'EOF'
-Usage: linux-systemd.sh --hub=<HUB_URL> (--token=<TOKEN> | --key=<PUBLIC_KEY>) [--help]
+Usage: linux-systemd.sh --hub=<HUB_URL> --key=<SSH_PUBLIC_KEY> [--token=<TOKEN>] [--help]
 
 Installs the Beszel agent binary to /usr/local/bin/beszel-agent and registers
 a systemd unit at /etc/systemd/system/beszel-agent.service, then starts it.
@@ -41,18 +49,22 @@ Required arguments:
   --hub=<HUB_URL>      URL of the Beszel hub.
                        For universal-token mode, use http://host:8090.
                        For legacy per-system-key mode, use tcp://host:45876.
-                       Passed to the agent as the HUB_URL environment variable.
-
-  At least one of:
-  --token=<TOKEN>      Universal token from the hub UI (Settings -> Tokens &
-                       Fingerprints -> Universal token). Same token works for
-                       every host; the agent self-registers on first connect.
-                       Passed as TOKEN.
-  --key=<PUBLIC_KEY>   Per-system public key from the hub UI (Settings ->
-                       Systems -> Add System), bound to this one host.
+                       Passed as HUB_URL.
+  --key=<PUBLIC_KEY>   SSH public key the agent uses to authenticate the hub.
+                       In universal-token mode this is the hub's universal
+                       key (same for every agent; bundled UI's Tokens &
+                       Fingerprints page shows it). In per-system mode this
+                       is the per-host key from Add System.
                        Passed as KEY.
 
-Options:
+Optional:
+  --token=<TOKEN>      Universal token from the hub UI (Settings -> Tokens &
+                       Fingerprints -> Universal token). When set, the agent
+                       self-registers via WebSocket on first start, so no
+                       Add-System click is needed for this host.
+                       Passed as TOKEN.
+
+Other:
   -h, --help           Show this message and exit.
 
 Run as root (or via sudo). Requires curl, tar, and systemd.
@@ -95,7 +107,10 @@ for arg in "$@"; do
 done
 
 [ -n "$HUB" ] || { usage >&2; die "--hub is required"; }
-[ -n "$KEY" ] || [ -n "$TOKEN" ] || { usage >&2; die "either --token or --key is required"; }
+# --key is required even in universal-token mode: the agent always starts an
+# SSH listener and needs a public key to authenticate the hub against. Beszel
+# 0.18 has no flag to disable the listener.
+[ -n "$KEY" ] || { usage >&2; die "--key is required (the hub's SSH public key, used by the agent's listener to authenticate the hub)"; }
 
 # Basic sanity check: reject characters that would break the service unit or
 # enable injection into the systemd Environment= lines. Keep permissive for

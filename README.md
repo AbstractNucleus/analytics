@@ -198,30 +198,44 @@ Within ~60s, the bserver row appears on the fleet view.
 > same metrics under different keys. Leave bserver's compose agent alone; use
 > the scripts below only on coco, kleen-pc, and ZacBookPro.
 
-Two registration modes are supported. Pick one and use it consistently across
-all your agent hosts:
+Two registration modes are supported. **Both modes require a `--key` / `-Key`** —
+Beszel 0.18 always starts an SSH listener and needs a public key to
+authenticate the hub. The two modes differ in *which* key value you paste
+and whether you also pass `--token` / `-Token`:
 
 #### Mode A: universal token (recommended for fleets that grow over time)
 
-Generate one token in Beszel's bundled UI at `http://<BSERVER_TS_IP>:8090/`
-under **Settings -> Tokens & Fingerprints -> Universal token** (toggle "Active"
-and "Permanent" if you want it to keep working after the first registration).
-The same token works for every host; the agent self-registers on first connect,
-so there is no per-host Add-System click. The hub URL changes from
-`tcp://<host>:45876` (legacy SSH path) to `http://<host>:8090` (the WebSocket
-path the agent uses with a token).
+Both `--key` and `--token` come from the same place — the bundled UI at
+`http://<BSERVER_TS_IP>:8090/` under **Settings -> Tokens & Fingerprints**:
+
+- **Token** (`--token` / `-Token`): activate the **Universal token** there
+  (toggle "Active"; toggle "Permanent" too if you want it to keep working
+  after the first registration). Same token works for every host; the agent
+  self-registers via WebSocket on first connect. The Tokens & Fingerprints
+  page also has a "Copy Linux/Windows install command" button that fills
+  this for you.
+- **Key** (`--key` / `-Key`): the hub's universal SSH public key. The same
+  Tokens & Fingerprints page shows it inline in the install commands. It
+  also lives behind `GET /api/beszel/getkey` (admin auth required) — same
+  value for every host, doesn't rotate unless you rotate it.
+
+The hub URL is `http://<BSERVER_TS_IP>:8090` (the agent connects out via
+WebSocket; no per-host inbound SSH from the hub is needed in token mode).
 
 > **Tradeoff.** Universal tokens are bearer credentials — anyone holding the
 > token can register a system under your account. Rotate it (same UI screen)
-> after onboarding a new host on a less-trusted machine, or stick with Mode B
-> below if that's a concern.
+> after onboarding a new host on a less-trusted machine, or use Mode B if
+> that's a concern.
 
 #### Mode B: per-system key (one Add-System click per host)
 
-Add the system in Beszel's bundled admin UI at `http://<BSERVER_TS_IP>:8090/`
-(Settings -> Systems -> Add System) to generate that host's public key, then
-run the installer one-liner with the `--key=` / `-Key` flag on the host itself.
-Each key is bound to one specific host.
+Add the system in Beszel's bundled admin UI (Settings -> Systems -> Add
+System) to generate that host's public key, then run the installer one-liner
+with `--key=<that-host's-key>` / `-Key <that-host's-key>` on the host itself.
+No `--token` / `-Token`. Each key is bound to one specific host.
+
+The hub URL in this mode is `tcp://<BSERVER_TS_IP>:45876` (the hub initiates
+inbound SSH connections to the agent's listener).
 
 ### Linux (coco)
 
@@ -229,14 +243,16 @@ Universal-token mode:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/AbstractNucleus/analytics/main/deploy/agent-install/linux-systemd.sh \
-  | sudo bash -s -- --hub=http://<bserver-TS-IP>:8090 --token=<universal-token>
+  | sudo bash -s -- --hub=http://<bserver-TS-IP>:8090 \
+                    --key='ssh-ed25519 AAAA...(hub key)' \
+                    --token=<universal-token>
 ```
 
 Per-system-key mode:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/AbstractNucleus/analytics/main/deploy/agent-install/linux-systemd.sh \
-  | sudo bash -s -- --hub=tcp://<bserver-TS-IP>:45876 --key=<agent-public-key>
+  | sudo bash -s -- --hub=tcp://<bserver-TS-IP>:45876 --key=<per-system-key>
 ```
 
 The script pins Beszel to the same version as the compose stack, auto-detects
@@ -249,20 +265,24 @@ From an **elevated** PowerShell. Universal-token mode:
 
 ```powershell
 iwr -useb https://raw.githubusercontent.com/AbstractNucleus/analytics/main/deploy/agent-install/windows-install.ps1 -OutFile C:\install-beszel.ps1
-C:\install-beszel.ps1 -Hub http://<bserver-TS-IP>:8090 -Token <universal-token>
+C:\install-beszel.ps1 -Hub http://<bserver-TS-IP>:8090 `
+                      -Key  "ssh-ed25519 AAAA...(hub key)" `
+                      -Token <universal-token>
 ```
 
 Per-system-key mode:
 
 ```powershell
 iwr -useb https://raw.githubusercontent.com/AbstractNucleus/analytics/main/deploy/agent-install/windows-install.ps1 -OutFile C:\install-beszel.ps1
-C:\install-beszel.ps1 -Hub tcp://<bserver-TS-IP>:45876 -Key <agent-public-key>
+C:\install-beszel.ps1 -Hub tcp://<bserver-TS-IP>:45876 -Key <per-system-key>
 ```
 
-The script downloads the pinned Windows release, installs to
-`C:\Program Files\Beszel\beszel-agent.exe`, registers a Windows service named
-`beszel-agent` with `HUB_URL` plus the chosen `KEY` and/or `TOKEN` in its
-environment, and starts it.
+The script downloads the pinned Windows release plus NSSM (the service
+wrapper Beszel agent needs because it's a plain CLI rather than a
+Windows-service-aware binary), installs them under
+`C:\Program Files\Beszel\`, registers a Windows service named `beszel-agent`
+with `HUB_URL`, `KEY`, and optionally `TOKEN` in its environment, and starts
+it. Logs go to `C:\Program Files\Beszel\logs\beszel-agent.log`.
 
 ## Dev mode
 
