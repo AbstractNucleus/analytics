@@ -262,17 +262,41 @@ try {
     # (idempotent re-run) or from the broken sc.exe-based installer that
     # shipped before this PR (will be in error/can't-start state). Either way,
     # stop and remove it cleanly via sc.exe (works for both registration paths).
+    #
+    # Two subtleties make the polling here non-trivial:
+    #   1. `sc.exe delete` returns success but the SCM keeps the entry in
+    #      SERVICE_DELETE_PENDING state until every open handle is closed
+    #      (services.msc, Event Viewer, perfmon, even our own Get-Service
+    #      pipeline can hold one).
+    #   2. `Get-Service` returns $null once the service is in PENDING_DELETED,
+    #      so it lies about the slot being free. `sc.exe query` is the
+    #      authoritative check — it returns 1060 only when the entry is
+    #      truly gone, otherwise it reports the actual state (PAUSED,
+    #      STOPPED, PENDING_DELETED, etc).
     $existing = Get-Service -Name 'beszel-agent' -ErrorAction SilentlyContinue
     if ($existing) {
         Write-Host "Removing existing beszel-agent service (clean re-install)"
-        if ($existing.Status -eq 'Running') {
-            Stop-Service -Name 'beszel-agent' -Force -ErrorAction SilentlyContinue
+        & sc.exe stop beszel-agent | Out-Null
+        # Stop is also async; give the agent process a chance to exit before delete.
+        $stopDeadline = (Get-Date).AddSeconds(15)
+        while ((Get-Date) -lt $stopDeadline) {
+            $svc = Get-Service -Name 'beszel-agent' -ErrorAction SilentlyContinue
+            if (-not $svc -or $svc.Status -eq 'Stopped') { break }
+            Start-Sleep -Milliseconds 250
         }
         & sc.exe delete beszel-agent | Out-Null
-        # sc.exe delete is async; wait briefly for the SCM to drop the entry.
-        $deadline = (Get-Date).AddSeconds(10)
-        while ((Get-Service -Name 'beszel-agent' -ErrorAction SilentlyContinue) -and (Get-Date) -lt $deadline) {
-            Start-Sleep -Milliseconds 200
+        # Poll sc.exe query (not Get-Service) for the slot to truly free.
+        # PENDING_DELETED can persist 30s+ if a console has the service
+        # selected; up to 60s here, then fall through and let nssm install
+        # surface the real error.
+        $deleteDeadline = (Get-Date).AddSeconds(60)
+        while ((Get-Date) -lt $deleteDeadline) {
+            $null = & sc.exe query beszel-agent 2>&1
+            if ($LASTEXITCODE -eq 1060) { break }
+            Start-Sleep -Milliseconds 500
+        }
+        if ($LASTEXITCODE -ne 1060) {
+            Write-Warning "beszel-agent service slot still held after 60s (likely PENDING_DELETED). Close services.msc / Event Viewer and re-run, or reboot."
         }
     }
 
