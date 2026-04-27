@@ -2,11 +2,25 @@
 # -----------------------------------------------------------------------------
 # linux-systemd.sh - install Beszel agent as a systemd service on Linux.
 #
-# Designed to be fetched directly from GitHub and piped to a shell:
+# Designed to be fetched directly from GitHub and piped to a shell.
+#
+# Universal-token mode (recommended; agent self-registers on first connect):
 #
 #   curl -fsSL https://raw.githubusercontent.com/<owner>/analytics/main/\
 #     deploy/agent-install/linux-systemd.sh \
-#     | sudo bash -s -- --hub=tcp://hub.example:45876 --key=<agent-public-key>
+#     | sudo bash -s -- --hub=http://hub.example:8090 \
+#                       --key='ssh-ed25519 AAAA...(hub's universal SSH key)' \
+#                       --token=<universal-token>
+#
+# Per-system-key mode (legacy; one key per host, generated via Add System):
+#
+#   curl -fsSL ... | sudo bash -s -- --hub=tcp://hub.example:45876 \
+#                                    --key=<per-system-public-key>
+#
+# --key is REQUIRED in both modes: the agent always starts an SSH listener and
+# needs a public key to authenticate the hub against (Beszel 0.18 has no flag
+# to disable the listener). In token mode the same hub-wide key is shared by
+# every agent.
 #
 # Works on Ubuntu, Arch Linux, and Raspberry Pi OS without apt/pacman deps.
 # Requires: curl, tar, systemd, root (uid 0) to write /etc/systemd and /usr/local/bin.
@@ -26,18 +40,31 @@ BESZEL_VERSION="0.18.7"
 
 usage() {
     cat <<'EOF'
-Usage: linux-systemd.sh --hub=<HUB_URL> --key=<AGENT_PUBLIC_KEY> [--help]
+Usage: linux-systemd.sh --hub=<HUB_URL> --key=<SSH_PUBLIC_KEY> [--token=<TOKEN>] [--help]
 
 Installs the Beszel agent binary to /usr/local/bin/beszel-agent and registers
 a systemd unit at /etc/systemd/system/beszel-agent.service, then starts it.
 
 Required arguments:
-  --hub=<HUB_URL>      URL or tcp://host:port of the Beszel hub. Passed to the
-                       agent as the HUB_URL environment variable.
-  --key=<PUBLIC_KEY>   Public key the hub will use to authenticate this agent.
-                       Obtained from the Beszel hub admin UI. Passed as KEY.
+  --hub=<HUB_URL>      URL of the Beszel hub.
+                       For universal-token mode, use http://host:8090.
+                       For legacy per-system-key mode, use tcp://host:45876.
+                       Passed as HUB_URL.
+  --key=<PUBLIC_KEY>   SSH public key the agent uses to authenticate the hub.
+                       In universal-token mode this is the hub's universal
+                       key (same for every agent; bundled UI's Tokens &
+                       Fingerprints page shows it). In per-system mode this
+                       is the per-host key from Add System.
+                       Passed as KEY.
 
-Options:
+Optional:
+  --token=<TOKEN>      Universal token from the hub UI (Settings -> Tokens &
+                       Fingerprints -> Universal token). When set, the agent
+                       self-registers via WebSocket on first start, so no
+                       Add-System click is needed for this host.
+                       Passed as TOKEN.
+
+Other:
   -h, --help           Show this message and exit.
 
 Run as root (or via sudo). Requires curl, tar, and systemd.
@@ -52,6 +79,7 @@ die() {
 # ------------------------------- arg parsing --------------------------------
 HUB=""
 KEY=""
+TOKEN=""
 
 if [ "$#" -eq 0 ]; then
     usage >&2
@@ -62,7 +90,8 @@ for arg in "$@"; do
     case "$arg" in
         --hub=*)    HUB="${arg#--hub=}" ;;
         --key=*)    KEY="${arg#--key=}" ;;
-        --hub|--key)
+        --token=*)  TOKEN="${arg#--token=}" ;;
+        --hub|--key|--token)
             die "argument '$arg' requires =VALUE (e.g. --hub=tcp://host:port)"
             ;;
         -h|--help)
@@ -78,7 +107,10 @@ for arg in "$@"; do
 done
 
 [ -n "$HUB" ] || { usage >&2; die "--hub is required"; }
-[ -n "$KEY" ] || { usage >&2; die "--key is required"; }
+# --key is required even in universal-token mode: the agent always starts an
+# SSH listener and needs a public key to authenticate the hub against. Beszel
+# 0.18 has no flag to disable the listener.
+[ -n "$KEY" ] || { usage >&2; die "--key is required (the hub's SSH public key, used by the agent's listener to authenticate the hub)"; }
 
 # Basic sanity check: reject characters that would break the service unit or
 # enable injection into the systemd Environment= lines. Keep permissive for
@@ -88,6 +120,9 @@ case "$HUB" in
 esac
 case "$KEY" in
     *[$'\n\r"\\']*) die "--key contains disallowed characters (newline, quote, backslash)" ;;
+esac
+case "$TOKEN" in
+    *[$'\n\r"\\']*) die "--token contains disallowed characters (newline, quote, backslash)" ;;
 esac
 
 # ----------------------------- pre-flight checks ----------------------------
@@ -134,7 +169,8 @@ UNIT_PATH="/etc/systemd/system/beszel-agent.service"
 printf 'Writing %s\n' "$UNIT_PATH"
 
 umask 022
-cat > "$UNIT_PATH" <<EOF
+{
+    cat <<EOF
 [Unit]
 Description=Beszel Agent
 After=network-online.target
@@ -144,7 +180,10 @@ Wants=network-online.target
 Type=simple
 User=root
 Environment="HUB_URL=${HUB}"
-Environment="KEY=${KEY}"
+EOF
+    [ -n "$KEY" ]   && printf 'Environment="KEY=%s"\n' "$KEY"
+    [ -n "$TOKEN" ] && printf 'Environment="TOKEN=%s"\n' "$TOKEN"
+    cat <<'EOF'
 ExecStart=/usr/local/bin/beszel-agent
 Restart=always
 RestartSec=5
@@ -152,6 +191,7 @@ RestartSec=5
 [Install]
 WantedBy=multi-user.target
 EOF
+} > "$UNIT_PATH"
 chmod 0644 "$UNIT_PATH"
 
 # ---------------------------- enable & start --------------------------------
