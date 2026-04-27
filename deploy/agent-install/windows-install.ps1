@@ -280,11 +280,17 @@ try {
     & $nssmExe set beszel-agent Description "Beszel monitoring agent (https://github.com/henrygd/beszel)" | Out-Null
     & $nssmExe set beszel-agent Start SERVICE_AUTO_START | Out-Null
 
-    # NSSM env handling: AppEnvironmentExtra accepts +NAME=VALUE to add or
-    # replace single entries without nuking the whole environment block.
-    & $nssmExe set beszel-agent AppEnvironmentExtra "+HUB_URL=$Hub" | Out-Null
-    if (-not [string]::IsNullOrEmpty($Key))   { & $nssmExe set beszel-agent AppEnvironmentExtra "+KEY=$Key"     | Out-Null }
-    if (-not [string]::IsNullOrEmpty($Token)) { & $nssmExe set beszel-agent AppEnvironmentExtra "+TOKEN=$Token" | Out-Null }
+    # NSSM 2.24's `set AppEnvironmentExtra` REPLACES the whole REG_MULTI_SZ
+    # value on each invocation and does NOT interpret a leading `+` (verified
+    # against a live install: the literal `+TOKEN=...` string ended up in
+    # HKLM\...\beszel-agent\Parameters\AppEnvironmentExtra). Pass every entry
+    # as a separate positional arg in a single call so all three vars land in
+    # the registry without a magic prefix.
+    $envArgs = @("HUB_URL=$Hub")
+    if (-not [string]::IsNullOrEmpty($Key))   { $envArgs += "KEY=$Key" }
+    if (-not [string]::IsNullOrEmpty($Token)) { $envArgs += "TOKEN=$Token" }
+    & $nssmExe set beszel-agent AppEnvironmentExtra @envArgs | Out-Null
+    if ($LASTEXITCODE -ne 0) { Die "nssm set AppEnvironmentExtra failed (exit $LASTEXITCODE)" }
 
     # Capture stdout+stderr to a rolling log so post-install diagnosis is easy.
     $logDir = Join-Path $installDir 'logs'
