@@ -49,14 +49,14 @@ describe('per-host view (hosts/[slug]/+page.svelte)', () => {
     const dot = document.querySelector('.status-dot');
     expect(dot?.getAttribute('data-status')).toBe(SYSTEM.status);
 
+    expect(document.querySelector('[aria-label="Host details"]')).not.toBeNull();
     expect(document.querySelector('[aria-label="CPU"]')).not.toBeNull();
     expect(document.querySelector('[aria-label="Memory"]')).not.toBeNull();
     expect(document.querySelector('[aria-label="Disk"]')).not.toBeNull();
     expect(document.querySelector('[aria-label="Network"]')).not.toBeNull();
-    expect(document.querySelector('[aria-label="Uptime and kernel"]')).not.toBeNull();
   });
 
-  it('surfaces kernel and OS name from SystemDetails in the uptime panel', () => {
+  it('surfaces kernel and OS name from SystemDetails in the host meta strip', () => {
     render(Page, {
       props: {
         data: {
@@ -69,6 +69,9 @@ describe('per-host view (hosts/[slug]/+page.svelte)', () => {
       },
     });
     expect(screen.getByText(SYSTEM_DETAILS.kernel)).toBeInTheDocument();
-    expect(screen.getByText(SYSTEM_DETAILS.osName)).toBeInTheDocument();
+    // OS is rendered as `osName · arch` when arch is present.
+    expect(
+      screen.getByText(new RegExp(SYSTEM_DETAILS.osName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))),
+    ).toBeInTheDocument();
   });
 });

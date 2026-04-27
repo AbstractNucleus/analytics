@@ -1,5 +1,14 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/svelte';
+
+vi.mock('uplot', () => {
+  class MockUplot {
+    constructor() {}
+    setData() {}
+    destroy() {}
+  }
+  return { default: MockUplot };
+});
 
 import DiskPanel from './DiskPanel.svelte';
 
