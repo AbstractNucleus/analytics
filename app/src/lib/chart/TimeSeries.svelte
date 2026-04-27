@@ -45,16 +45,31 @@
       return next as uPlot.Series;
     });
 
+    // uPlot's default axis stroke is black — invisible on the dark surface
+    // panels live on. Pull theme-aware values from --chart-axis / --chart-grid
+    // and fall back to neutrals so axes never silently render in the default.
+    const axisStroke = cs.getPropertyValue('--chart-axis').trim() || '#b0b0b0';
+    const gridStroke = cs.getPropertyValue('--chart-grid').trim() || 'rgba(230,230,230,0.10)';
+    const axisX: uPlot.Axis = {
+      stroke: axisStroke,
+      grid: { stroke: gridStroke },
+      ticks: { stroke: axisStroke }
+    };
+    if (formatX) axisX.values = (_u, vals) => vals.map(formatX);
+    const axisY: uPlot.Axis = {
+      stroke: axisStroke,
+      grid: { stroke: gridStroke },
+      ticks: { stroke: axisStroke }
+    };
+    if (formatY) axisY.values = (_u, vals) => vals.map(formatY);
+
     const opts: uPlot.Options = {
       width: container.clientWidth || 600,
       height,
       series: resolvedSeries,
       legend: { show: false },
       scales: yRange ? { y: { range: () => [yRange[0], yRange[1]] } } : undefined,
-      axes: [
-        formatX ? { values: (_u, vals) => vals.map(formatX) } : {},
-        formatY ? { values: (_u, vals) => vals.map(formatY) } : {}
-      ]
+      axes: [axisX, axisY]
     };
 
     chart = new UPlot(opts, data, container);
