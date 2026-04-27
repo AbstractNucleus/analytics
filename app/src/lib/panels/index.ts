@@ -5,6 +5,7 @@ export { default as CpuPanel } from './CpuPanel.svelte';
 export { default as MemoryPanel } from './MemoryPanel.svelte';
 export { default as DiskPanel } from './DiskPanel.svelte';
 export { default as NetworkPanel } from './NetworkPanel.svelte';
+export { default as ContainersPanel } from './ContainersPanel.svelte';
 export { default as TempsPanel } from './TempsPanel.svelte';
 export { default as HostMeta } from './HostMeta.svelte';
 export { default as FleetRow } from './FleetRow.svelte';
