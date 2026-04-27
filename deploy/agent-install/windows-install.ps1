@@ -63,6 +63,12 @@ $ErrorActionPreference = 'Stop'
 
 $BeszelVersion = "0.18.7"
 
+# NSSM wraps the non-service-aware beszel-agent.exe as a Windows service.
+# Pinned to NSSM 2.24, the latest stable release on https://nssm.cc/download.
+# Bundled into the install dir so the service can self-restart without external
+# tooling (no scoop / winget dependency).
+$NssmVersion = "2.24"
+
 function Write-Usage {
     $msg = @'
 Usage: windows-install.ps1 -Hub <HUB_URL> (-Token <TOKEN> | -Key <PUBLIC_KEY>) [-Help]
@@ -190,58 +196,95 @@ try {
 
     $installDir = 'C:\Program Files\Beszel'
     $installExe = Join-Path $installDir 'beszel-agent.exe'
+    $nssmExe    = Join-Path $installDir 'nssm.exe'
     if (-not (Test-Path $installDir)) {
         New-Item -ItemType Directory -Force -Path $installDir | Out-Null
     }
 
-    # Stop the service if it exists so we can overwrite the binary cleanly.
-    $existing = Get-Service -Name 'beszel-agent' -ErrorAction SilentlyContinue
-    if ($existing -and $existing.Status -eq 'Running') {
-        Write-Host "Stopping existing beszel-agent service"
-        Stop-Service -Name 'beszel-agent' -Force -ErrorAction SilentlyContinue
+    # ---------------------------- NSSM download -----------------------------
+    # beszel-agent.exe is a plain CLI, not a Windows-service-aware binary.
+    # Calling sc.exe create on it directly leads to ERROR_SERVICE_REQUEST_TIMEOUT
+    # (1053) on start because the binary never replies to the Service Control
+    # Protocol. NSSM is a tiny (~300KB) wrapper that hosts any CLI as a service.
+    # Beszel's own installer does the same thing, just installs NSSM via
+    # scoop/winget; we bundle it into the install dir so there's no package
+    # manager dependency.
+    $nssmZip = Join-Path $tmpDir 'nssm.zip'
+    $nssmUrl = "https://nssm.cc/release/nssm-${NssmVersion}.zip"
+    Write-Host "Downloading $nssmUrl"
+    $oldProgress = $ProgressPreference
+    $ProgressPreference = 'SilentlyContinue'
+    try {
+        Invoke-WebRequest -Uri $nssmUrl -OutFile $nssmZip -UseBasicParsing
+    } finally {
+        $ProgressPreference = $oldProgress
+    }
+    if (-not (Test-Path $nssmZip)) { Die "failed to download $nssmUrl" }
+
+    Write-Host "Extracting nssm.exe"
+    Expand-Archive -Path $nssmZip -DestinationPath $tmpDir -Force
+    $nssmArch = if ($arch -eq 'amd64') { 'win64' } else { 'win64' }  # NSSM 2.24 ships only win32/win64; arm64 runs win64 under emulation
+    $nssmSrc  = Join-Path $tmpDir "nssm-${NssmVersion}\${nssmArch}\nssm.exe"
+    if (-not (Test-Path $nssmSrc)) {
+        Die "expected nssm.exe at $nssmSrc after extracting $nssmUrl"
     }
 
+    # --------------------- existing service cleanup -------------------------
+    # Beszel-agent may already be registered — either from a prior NSSM install
+    # (idempotent re-run) or from the broken sc.exe-based installer that
+    # shipped before this PR (will be in error/can't-start state). Either way,
+    # stop and remove it cleanly via sc.exe (works for both registration paths).
+    $existing = Get-Service -Name 'beszel-agent' -ErrorAction SilentlyContinue
+    if ($existing) {
+        Write-Host "Removing existing beszel-agent service (clean re-install)"
+        if ($existing.Status -eq 'Running') {
+            Stop-Service -Name 'beszel-agent' -Force -ErrorAction SilentlyContinue
+        }
+        & sc.exe delete beszel-agent | Out-Null
+        # sc.exe delete is async; wait briefly for the SCM to drop the entry.
+        $deadline = (Get-Date).AddSeconds(10)
+        while ((Get-Service -Name 'beszel-agent' -ErrorAction SilentlyContinue) -and (Get-Date) -lt $deadline) {
+            Start-Sleep -Milliseconds 200
+        }
+    }
+
+    # ------------------------- install binaries -----------------------------
     Write-Host "Installing to $installExe"
     Copy-Item -Path $extractedExe -Destination $installExe -Force
+    Copy-Item -Path $nssmSrc      -Destination $nssmExe    -Force
 
-    # ---------------------------- service registration ----------------------
-    # sc.exe quoting: binPath value must be double-quoted because of the space
-    # in 'Program Files'. The outer = requires a space after it.
-    $binPath = "`"$installExe`""
+    # ---------------------- service registration via NSSM -------------------
+    Write-Host "Registering beszel-agent service via NSSM"
+    & $nssmExe install beszel-agent $installExe | Out-Null
+    if ($LASTEXITCODE -ne 0) { Die "nssm install failed (exit $LASTEXITCODE)" }
 
-    if ($existing) {
-        Write-Host "Updating existing beszel-agent service"
-        & sc.exe config beszel-agent binPath= $binPath start= auto DisplayName= "Beszel Agent" | Out-Null
-        if ($LASTEXITCODE -ne 0) { Die "sc.exe config failed (exit $LASTEXITCODE)" }
-    } else {
-        Write-Host "Registering beszel-agent service"
-        & sc.exe create beszel-agent binPath= $binPath start= auto DisplayName= "Beszel Agent" | Out-Null
-        if ($LASTEXITCODE -ne 0) { Die "sc.exe create failed (exit $LASTEXITCODE)" }
-    }
+    & $nssmExe set beszel-agent DisplayName "Beszel Agent" | Out-Null
+    & $nssmExe set beszel-agent Description "Beszel monitoring agent (https://github.com/henrygd/beszel)" | Out-Null
+    & $nssmExe set beszel-agent Start SERVICE_AUTO_START | Out-Null
 
-    # Environment vars for the service live in the service's registry key as a
-    # REG_MULTI_SZ 'Environment' value. sc.exe has no flag for this, so we
-    # write it directly. Each entry is a "NAME=VALUE" string.
-    $svcKey = 'HKLM:\SYSTEM\CurrentControlSet\Services\beszel-agent'
-    if (-not (Test-Path $svcKey)) {
-        Die "service registry key not found at $svcKey after sc.exe create"
-    }
-    $envEntries = @("HUB_URL=$Hub")
-    if (-not [string]::IsNullOrEmpty($Key))   { $envEntries += "KEY=$Key" }
-    if (-not [string]::IsNullOrEmpty($Token)) { $envEntries += "TOKEN=$Token" }
-    New-ItemProperty -Path $svcKey -Name 'Environment' -PropertyType MultiString -Value $envEntries -Force | Out-Null
+    # NSSM env handling: AppEnvironmentExtra accepts +NAME=VALUE to add or
+    # replace single entries without nuking the whole environment block.
+    & $nssmExe set beszel-agent AppEnvironmentExtra "+HUB_URL=$Hub" | Out-Null
+    if (-not [string]::IsNullOrEmpty($Key))   { & $nssmExe set beszel-agent AppEnvironmentExtra "+KEY=$Key"     | Out-Null }
+    if (-not [string]::IsNullOrEmpty($Token)) { & $nssmExe set beszel-agent AppEnvironmentExtra "+TOKEN=$Token" | Out-Null }
+
+    # Capture stdout+stderr to a rolling log so post-install diagnosis is easy.
+    $logDir = Join-Path $installDir 'logs'
+    if (-not (Test-Path $logDir)) { New-Item -ItemType Directory -Force -Path $logDir | Out-Null }
+    $logFile = Join-Path $logDir 'beszel-agent.log'
+    & $nssmExe set beszel-agent AppStdout $logFile | Out-Null
+    & $nssmExe set beszel-agent AppStderr $logFile | Out-Null
+    & $nssmExe set beszel-agent AppRotateFiles 1 | Out-Null
+    & $nssmExe set beszel-agent AppRotateBytes 1048576 | Out-Null
 
     Write-Host "Starting beszel-agent service"
-    & sc.exe start beszel-agent | Out-Null
-    if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne 1056) {
-        # 1056 = ERROR_SERVICE_ALREADY_RUNNING; treat as success.
-        Die "sc.exe start failed (exit $LASTEXITCODE)"
-    }
+    & $nssmExe start beszel-agent | Out-Null
+    if ($LASTEXITCODE -ne 0) { Die "nssm start failed (exit $LASTEXITCODE)" }
 
     Write-Host ""
-    Write-Host "Beszel agent v$BeszelVersion installed and started."
+    Write-Host "Beszel agent v$BeszelVersion installed and started (NSSM v$NssmVersion)."
     Write-Host "Check status with: Get-Service beszel-agent"
-    Write-Host "Or:                sc.exe query beszel-agent"
+    Write-Host "Logs at:           $logFile"
 } finally {
     & $cleanup
 }
