@@ -1,7 +1,8 @@
-# Dev override: swap the built frontend image for a Vite dev server that
+# Dev overlay: swap the built frontend image for a Vite dev server that
 # bind-mounts ../app so edits hot-reload. Hub and agent are unchanged from
-# prod. Loaded automatically by `docker compose up` alongside the base file;
-# prod deploys must pass `-f docker-compose.yml` only.
+# prod. Opt-in only — load explicitly with
+# `docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d`.
+# Plain `docker compose up` from this dir uses the base file (prod) only.
 
 services:
   frontend:
