@@ -294,7 +294,7 @@ cd deploy
 cp .env.example .env
 # Minimal dev values: BESZEL_VERSION + any non-empty BESZEL_AGENT_KEY are enough
 # to start the hub + agent. BSERVER_LAN_IP and ANALYTICS_HOST_PORT are unused in dev.
-docker compose -f docker-compose.yml -f docker-compose.override.yml up -d beszel-hub frontend
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d beszel-hub frontend
 ```
 
 Visit `http://localhost:5173`.
