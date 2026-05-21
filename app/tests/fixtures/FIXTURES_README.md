@@ -1,9 +1,6 @@
 # Beszel fixtures
 
-Real captures from a Beszel v0.18.7 hub. These replaced an earlier set of synthesized
-fixtures that diverged from the actual schema — see
-[docs/decisions/2026-04-24-beszel-schema-drift.md](../../../docs/decisions/2026-04-24-beszel-schema-drift.md)
-for what was wrong with the synthesized shape and why this refactor happened.
+Real captures from a Beszel v0.18.7 hub.
 
 ## Provenance
 
