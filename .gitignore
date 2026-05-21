@@ -1,5 +1,6 @@
 .superpowers/
 .claude/
+docs/agents/
 
 # OS / editor junk
 .DS_Store
