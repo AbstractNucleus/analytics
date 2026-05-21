@@ -114,10 +114,10 @@
     flex-shrink: 0;
   }
   .status-dot[data-status='up'] {
-    background: var(--accent);
+    background: var(--success);
   }
   .status-dot[data-status='down'] {
-    background: #7a1f1f;
+    background: var(--error);
   }
   .status-dot[data-status='paused'] {
     background: var(--text-regular);

@@ -48,8 +48,8 @@
     // uPlot's default axis stroke is black — invisible on the dark surface
     // panels live on. Pull theme-aware values from --chart-axis / --chart-grid
     // and fall back to neutrals so axes never silently render in the default.
-    const axisStroke = cs.getPropertyValue('--chart-axis').trim() || '#b0b0b0';
-    const gridStroke = cs.getPropertyValue('--chart-grid').trim() || 'rgba(230,230,230,0.10)';
+    const axisStroke = cs.getPropertyValue('--chart-axis').trim() || '#7a7468';
+    const gridStroke = cs.getPropertyValue('--chart-grid').trim() || 'rgba(233,227,214,0.08)';
     const axisX: uPlot.Axis = {
       stroke: axisStroke,
       grid: { stroke: gridStroke },

@@ -1,33 +1,44 @@
-/* Design tokens for the AbstractNucleus editorial system.
-   Two surfaces (--bg, --sub-alt), three text weights, one accent ("rust"),
-   a two-ring focus state, and motion primitives (125ms default, 400ms
-   spring, 1.2s pulse). Dark palette under [data-theme='dark'], light under
-   [data-theme='light']. :root mirrors the dark palette so first paint does
-   not flash before the theme store attaches data-theme. */
+/* Design tokens — Claude-inspired editorial palette.
+   Warm bone paper for light, press-room near-black for dark, rust accent
+   across both. Three text weights, one accent ("rust"), a two-ring focus
+   state, and motion primitives (125ms default, 400ms spring, 1.2s pulse).
+   Light palette under [data-theme='light']. :root mirrors the dark palette
+   so first paint does not flash before the theme store attaches. The
+   canonical palette lives at ../../../../../design/COLORS.md. */
 
 :root {
-  /* Surfaces */
-  --bg: #111111;
-  --sub-alt: #1a1a1a;
+  /* Surfaces — press ink, lifted press for cards/panels. */
+  --bg: #1b1b1c;
+  --sub-alt: #26262a;
 
-  /* Text — color + weight. Regular is the default body value; medium and bold
-     are reserved for metric readouts and headings. */
-  --text-regular: #e6e6e6;
-  --text-medium: #f2f2f2;
-  --text-bold: #ffffff;
+  /* Text — bone tints. Three steps so existing call sites that lean on a
+     subtle ink lift (regular -> medium -> bold) keep working. The design
+     system's purist version uses one ink + weight; we keep three for the
+     dashboard's metric-readout hierarchy. */
+  --text-regular: #d4cfc1;
+  --text-medium: #e9e3d6;
+  --text-bold: #f5efe2;
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-bold: 700;
 
-  /* Accent — rust per the AbstractNucleus editorial palette. */
-  --accent: #c2410c;
+  /* Accent — lifted rust. Warmer than the light-theme rust so it holds
+     contrast against the dark surface. The accent is scarce: caret, primary
+     CTA, focus indicator. Status indicators use --success / --error so the
+     accent doesn't read as a danger signal next to a hostname. */
+  --accent: #d07456;
+
+  /* Semantic — desaturated by design (Claude palette). Errors whisper, not
+     shout; success is moss, not fluorescent green. */
+  --success: #8aa968;
+  --error: #c8623d;
 
   /* Chart — read by canvas via getComputedStyle, so they must be concrete
      color strings (no var() references that canvas can't resolve). */
-  --chart-axis: #b0b0b0;
-  --chart-grid: rgba(230, 230, 230, 0.10);
+  --chart-axis: #7a7468;
+  --chart-grid: rgba(233, 227, 214, 0.08);
 
-  /* Focus — two-ring: inner dark halo to separate from the element, outer
+  /* Focus — two-ring: inner bg halo to separate from the element, outer
      accent ring for visibility. Apply as `box-shadow: var(--focus-ring)`. */
   --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
 
@@ -41,25 +52,29 @@
 }
 
 [data-theme='dark'] {
-  --bg: #111111;
-  --sub-alt: #1a1a1a;
-  --text-regular: #e6e6e6;
-  --text-medium: #f2f2f2;
-  --text-bold: #ffffff;
-  --accent: #c2410c;
+  --bg: #1b1b1c;
+  --sub-alt: #26262a;
+  --text-regular: #d4cfc1;
+  --text-medium: #e9e3d6;
+  --text-bold: #f5efe2;
+  --accent: #d07456;
+  --success: #8aa968;
+  --error: #c8623d;
   --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
-  --chart-axis: #b0b0b0;
-  --chart-grid: rgba(230, 230, 230, 0.10);
+  --chart-axis: #7a7468;
+  --chart-grid: rgba(233, 227, 214, 0.08);
 }
 
 [data-theme='light'] {
-  --bg: #f5f1e8;
-  --sub-alt: #ffffff;
-  --text-regular: #2a2522;
-  --text-medium: #1a1714;
-  --text-bold: #0a0807;
-  --accent: #9a3412;
+  --bg: #f1ece2;
+  --sub-alt: #e6dfd0;
+  --text-regular: #2a231d;
+  --text-medium: #1a1612;
+  --text-bold: #100c08;
+  --accent: #b5533a;
+  --success: #5a7a3a;
+  --error: #a0371f;
   --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
-  --chart-axis: #5a554f;
-  --chart-grid: rgba(42, 37, 34, 0.12);
+  --chart-axis: #8a7f6f;
+  --chart-grid: rgba(42, 35, 29, 0.10);
 }
