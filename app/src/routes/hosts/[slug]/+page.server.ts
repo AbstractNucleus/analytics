@@ -19,6 +19,13 @@ export const load: PageServerLoad = async ({ params }) => {
     ]);
     return { system, systemDetails, samples, containers };
   } catch (err) {
-    throw error(404, `Unknown host: ${params.slug}`);
+    // PocketBase's ClientResponseError sets `.status` to the upstream HTTP
+    // code; a real 404 means the slug is unknown. Every other shape (abort,
+    // network, 5xx, JSON-parse failure) is the hub failing — surfacing those
+    // as "Unknown host" would mislead the user into thinking they typoed.
+    if ((err as { status?: unknown }).status === 404) {
+      error(404, `Unknown host: ${params.slug}`);
+    }
+    error(503, 'Beszel hub did not respond. Check PUBLIC_BESZEL_URL and that the hub is reachable.');
   }
 };

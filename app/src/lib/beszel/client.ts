@@ -47,6 +47,11 @@ function escapeFilterValue(value: string): string {
 /** Upper bound on a single range fetch. 1 s samples × 24 h = 86 400 — we cap above that. */
 const MAX_PER_PAGE = 100_000;
 
+/** Per-request timeout. Tuned for tailnet RTTs; anything longer means the hub
+    is gone, not slow. The loaders map an AbortError to a 503 so the dev page
+    fails fast instead of hanging while the user waits on a dead Beszel. */
+const REQUEST_TIMEOUT_MS = 5_000;
+
 export function createClient(baseUrl: string, apiToken?: string): BeszelClient {
   const pb = new PocketBase(baseUrl);
   // SSR loaders fan out parallel calls (Promise.all) that, via resolveSystemId,
@@ -55,6 +60,12 @@ export function createClient(baseUrl: string, apiToken?: string): BeszelClient {
   // other and the loader catches "request was autocancelled" -> renders 404.
   // We only use this client server-side, so disable auto-cancellation outright.
   pb.autoCancellation(false);
+  // Inject AbortSignal.timeout on every request that doesn't already carry one
+  // so unreachable hubs surface as a fast AbortError instead of a 30s+ hang.
+  pb.beforeSend = (url, options) => {
+    if (!options.signal) options.signal = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
+    return { url, options };
+  };
   if (apiToken) {
     pb.authStore.save(apiToken);
   }
