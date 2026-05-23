@@ -4,6 +4,3 @@
 
 import './tokens.css';
 import './fonts.css';
-
-export { theme, setTheme } from './theme';
-export type { Theme } from './theme';

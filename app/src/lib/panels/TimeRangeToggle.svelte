@@ -22,17 +22,17 @@
   .toggle {
     display: inline-flex;
     gap: 0;
-    background: var(--sub-alt);
+    background: var(--bg-surface);
   }
   button {
     background: transparent;
-    color: var(--text-regular);
+    color: var(--fg-primary);
     border: none;
     padding: 0.375rem 0.75rem;
     font: inherit;
     font-variant-numeric: tabular-nums;
     cursor: pointer;
-    transition: color var(--dur-fast) var(--ease-default);
+    transition: color var(--motion-fast) var(--ease);
     min-height: 2.75rem;
     min-width: 2.75rem;
   }
@@ -42,14 +42,14 @@
     }
   }
   button:hover {
-    color: var(--text-bold);
+    color: var(--fg-strong);
   }
   button:focus-visible {
-    outline: none;
-    box-shadow: var(--focus-ring);
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
   button.active {
     color: var(--accent);
-    font-weight: var(--weight-bold);
+    font-weight: 600;
   }
 </style>

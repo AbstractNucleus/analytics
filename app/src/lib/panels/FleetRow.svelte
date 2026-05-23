@@ -44,8 +44,8 @@
     align-items: center;
     gap: 1rem;
     padding: 0.625rem 1rem;
-    background: var(--sub-alt);
-    color: var(--text-regular);
+    background: var(--bg-surface);
+    color: var(--fg-primary);
     font-variant-numeric: tabular-nums;
     min-height: 2.75rem;
   }
@@ -53,7 +53,7 @@
     width: 0.55rem;
     height: 0.55rem;
     border-radius: 50%;
-    background: var(--text-regular);
+    background: var(--fg-primary);
     flex-shrink: 0;
   }
   .status-dot[data-status='up'] {
@@ -63,16 +63,16 @@
     background: var(--error);
   }
   .status-dot[data-status='paused'] {
-    background: var(--text-regular);
+    background: var(--fg-primary);
     opacity: 0.6;
   }
   .status-dot[data-status='pending'] {
-    background: var(--text-medium);
+    background: var(--fg-primary);
     opacity: 0.5;
   }
   .name {
-    font-weight: var(--weight-medium);
-    color: var(--text-bold);
+    font-weight: 500;
+    color: var(--fg-strong);
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -80,17 +80,17 @@
   }
   .metric .k {
     font-size: 0.7rem;
-    color: var(--text-regular);
+    color: var(--fg-primary);
     opacity: 0.65;
     margin-right: 0.25rem;
   }
   .metric .v {
-    color: var(--text-bold);
-    font-weight: var(--weight-medium);
+    color: var(--fg-strong);
+    font-weight: 500;
   }
   .last-seen {
     font-size: 0.8rem;
-    color: var(--text-regular);
+    color: var(--fg-primary);
     opacity: 0.8;
     white-space: nowrap;
   }

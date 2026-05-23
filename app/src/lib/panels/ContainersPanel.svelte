@@ -46,9 +46,9 @@
 
 <style>
   .panel {
-    background: var(--sub-alt);
+    background: var(--bg-surface);
     padding: 0.875rem 1rem 1rem;
-    color: var(--text-regular);
+    color: var(--fg-primary);
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -59,17 +59,17 @@
     align-items: baseline;
   }
   h3 {
-    font-weight: var(--weight-medium);
+    font-weight: 500;
     font-size: 0.8125rem;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     margin: 0;
-    color: var(--text-medium);
+    color: var(--fg-primary);
     opacity: 0.8;
   }
   .count {
-    font-weight: var(--weight-bold);
-    color: var(--text-bold);
+    font-weight: 600;
+    color: var(--fg-strong);
     font-variant-numeric: tabular-nums;
     font-size: 1rem;
     line-height: 1;
@@ -85,29 +85,29 @@
     text-align: left;
     padding: 0.3rem 0.5rem;
     font-size: 0.875rem;
-    border-bottom: 1px solid color-mix(in srgb, var(--text-regular) 12%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--fg-primary) 12%, transparent);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
   thead th {
-    font-weight: var(--weight-medium);
+    font-weight: 500;
     font-size: 0.7rem;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: var(--text-regular);
+    color: var(--fg-primary);
     opacity: 0.6;
-    border-bottom-color: color-mix(in srgb, var(--text-regular) 24%, transparent);
+    border-bottom-color: color-mix(in srgb, var(--fg-primary) 24%, transparent);
   }
   tbody tr:last-child td {
     border-bottom: none;
   }
   td.name {
-    color: var(--text-bold);
-    font-weight: var(--weight-medium);
+    color: var(--fg-strong);
+    font-weight: 500;
   }
   td.image {
-    color: var(--text-regular);
+    color: var(--fg-primary);
   }
   td.mono {
     font-family: var(--font-mono, ui-monospace, SFMono-Regular, monospace);

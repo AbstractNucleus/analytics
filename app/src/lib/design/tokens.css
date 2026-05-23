@@ -1,80 +1,188 @@
-/* Design tokens — Claude-inspired editorial palette.
-   Warm bone paper for light, press-room near-black for dark, rust accent
-   across both. Three text weights, one accent ("rust"), a two-ring focus
-   state, and motion primitives (125ms default, 400ms spring, 1.2s pulse).
-   Light palette under [data-theme='light']. :root mirrors the dark palette
-   so first paint does not flash before the theme store attaches. The
-   canonical palette lives at ../../../../../design/COLORS.md. */
+/* Design tokens — vendored from AbstractNucleus/cdesign (the dashboard
+   sibling of AbstractNucleus/design). Flat dark IDE: near-black ground,
+   opaque graphite panels with hairline neutral borders, Inter Tight
+   throughout, one terracotta accent, an amber status pip.
 
+   Two-layer architecture: primitives (raw hex) at the bottom, semantic
+   tokens on top. Components consume the semantic layer only.
+
+   Single theme. The dark is the product — there is no light variant.
+
+   Dashboard extensions on top of stock cdesign, marked DASHBOARD below:
+   - --fg-strong: a third text tone for metric values that need to read
+     hotter than body. cdesign ships with two; we keep three because the
+     fleet rows stack label/value/headline in a single line and need the
+     contrast lift.
+   - --success / --error: status colors for host up/down indicators.
+     cdesign keeps the palette to terracotta + amber; a status dashboard
+     needs unambiguous ok/down signals, so we add desaturated moss and
+     red here.
+   - --chart-axis / --chart-grid: uPlot reads these via getComputedStyle
+     (canvas can't resolve var() at draw time). See TimeSeries.svelte. */
+
+
+/* ---- Primitives (raw scale — do not consume from components) ----------- */
 :root {
-  /* Surfaces — press ink, lifted press for cards/panels. */
-  --bg: #1b1b1c;
-  --sub-alt: #26262a;
+  /* Ink ramp — neutral dark grounds. */
+  --hex-void:           #0e0e0e;   /* page bg, deepest */
+  --hex-graphite:       #161616;   /* panel surface (resting) */
+  --hex-graphite-lift:  #1d1d1d;   /* panel surface (hover / focus within) */
+  --hex-ash:            #232323;   /* inline elements: inputs, kbd, code chips */
+  --hex-iron:           #2a2a2a;   /* dividers, strong border fallback */
 
-  /* Text — bone tints. Three steps so existing call sites that lean on a
-     subtle ink lift (regular -> medium -> bold) keep working. The design
-     system's purist version uses one ink + weight; we keep three for the
-     dashboard's metric-readout hierarchy. */
-  --text-regular: #d4cfc1;
-  --text-medium: #e9e3d6;
-  --text-bold: #f5efe2;
-  --weight-regular: 400;
-  --weight-medium: 500;
-  --weight-bold: 700;
+  /* Paper ramp — text on ink */
+  --hex-paper-bright: #f5f5f5;     /* DASHBOARD: metric values, headlines */
+  --hex-paper:        #ededed;     /* body text */
+  --hex-fog:          #8a8a8a;     /* muted text */
 
-  /* Accent — lifted rust. Warmer than the light-theme rust so it holds
-     contrast against the dark surface. The accent is scarce: caret, primary
-     CTA, focus indicator. Status indicators use --success / --error so the
-     accent doesn't read as a danger signal next to a hostname. */
-  --accent: #d07456;
+  /* Terracotta — the brand accent. Same hex as the Claude asterisk. */
+  --hex-clay:       #d97757;
+  --hex-clay-soft:  #cc785c;
 
-  /* Semantic — desaturated by design (Claude palette). Errors whisper, not
-     shout; success is moss, not fluorescent green. */
-  --success: #8aa968;
-  --error: #c8623d;
+  /* Amber — the status pip. */
+  --hex-amber:       #f5b800;
+  --hex-amber-soft:  #d9a200;
 
-  /* Chart — read by canvas via getComputedStyle, so they must be concrete
-     color strings (no var() references that canvas can't resolve). */
-  --chart-axis: #7a7468;
-  --chart-grid: rgba(233, 227, 214, 0.08);
+  /* DASHBOARD: status colors for host up/down. Desaturated so they read
+     as IDE chrome alongside the terracotta + amber, not as warning
+     signage. Red is clearly red (not orange) so it can't be confused
+     with the accent. */
+  --hex-moss:  #6e9d5b;
+  --hex-rust:  #c75450;
 
-  /* Focus — two-ring: inner bg halo to separate from the element, outer
-     accent ring for visibility. Apply as `box-shadow: var(--focus-ring)`. */
-  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
-
-  /* Motion primitives. */
-  --dur-fast: 125ms;
-  --dur-spring: 400ms;
-  --dur-pulse: 1200ms;
-  --ease-default: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --ease-pulse: cubic-bezier(0.4, 0, 0.2, 1);
+  /* Translucent border values. */
+  --hex-border:         rgba(255, 255, 255, 0.06);
+  --hex-border-strong:  rgba(255, 255, 255, 0.12);
 }
 
-[data-theme='dark'] {
-  --bg: #1b1b1c;
-  --sub-alt: #26262a;
-  --text-regular: #d4cfc1;
-  --text-medium: #e9e3d6;
-  --text-bold: #f5efe2;
-  --accent: #d07456;
-  --success: #8aa968;
-  --error: #c8623d;
-  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
-  --chart-axis: #7a7468;
-  --chart-grid: rgba(233, 227, 214, 0.08);
+
+/* ---- Semantic tokens --------------------------------------------------- */
+:root {
+  /* Surface */
+  --bg-page:           var(--hex-void);
+  --bg-surface:        var(--hex-graphite);
+  --bg-surface-hover:  var(--hex-graphite-lift);
+  --bg-elevated:       var(--hex-ash);
+
+  /* Text — three tones; see header comment on the dashboard extension. */
+  --fg-strong:   var(--hex-paper-bright);
+  --fg-primary:  var(--hex-paper);
+  --fg-muted:    var(--hex-fog);
+
+  /* Borders */
+  --border-soft:    var(--hex-border);
+  --border-strong:  var(--hex-border-strong);
+
+  /* Brand accent */
+  --accent:       var(--hex-clay);
+  --accent-soft:  var(--hex-clay-soft);
+
+  /* Status — amber pip and "live" indicators */
+  --status:       var(--hex-amber);
+  --status-soft:  var(--hex-amber-soft);
+
+  /* DASHBOARD: ok / down host state */
+  --success:  var(--hex-moss);
+  --error:    var(--hex-rust);
+
+  /* DASHBOARD: chart axis + grid. uPlot draws these into a canvas with no
+     CSS access, so they must be concrete color strings — never var()
+     chains that getComputedStyle can't unwrap to a literal. */
+  --chart-axis: #8a8a8a;
+  --chart-grid: rgba(255, 255, 255, 0.06);
+
+  /* Focus ring — accent on the neutral ground. */
+  --ring: var(--accent);
+
+  color-scheme: dark;
 }
 
-[data-theme='light'] {
-  --bg: #f1ece2;
-  --sub-alt: #e6dfd0;
-  --text-regular: #2a231d;
-  --text-medium: #1a1612;
-  --text-bold: #100c08;
-  --accent: #b5533a;
-  --success: #5a7a3a;
-  --error: #a0371f;
-  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
-  --chart-axis: #8a7f6f;
-  --chart-grid: rgba(42, 35, 29, 0.10);
+
+/* ---- Type, radii, spacing, motion -------------------------------------- */
+:root {
+  --font-sans: "Inter Tight", "Inter", -apple-system, BlinkMacSystemFont,
+               "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "JetBrains Mono", "Fira Code", SFMono-Regular,
+               Menlo, Consolas, "Liberation Mono", monospace;
+
+  --fs-xs:    0.78rem;
+  --fs-sm:    0.85rem;
+  --fs-md:    0.92rem;
+  --fs-base:  1rem;
+  --fs-lg:    1.1rem;
+  --fs-xl:    1.2rem;
+  --fs-display: clamp(2rem, 3.5vw, 2.75rem);
+
+  --lh-tight: 1.2;
+  --lh-snug:  1.35;
+  --lh-base:  1.55;
+
+  --radius:        10px;
+  --radius-small:  6px;
+  --radius-pill:   999px;
+
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-7:  28px;
+  --space-8:  32px;
+
+  --motion-fast: 120ms;
+  --motion-med:  180ms;
+  --ease:        ease;
+}
+
+
+/* ---- Base elements ----------------------------------------------------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background-color: var(--bg-page);
+  color: var(--fg-primary);
+  font-family: var(--font-sans);
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  font-feature-settings: 'tnum' 1;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--bg-page);
+}
+
+::placeholder {
+  color: var(--fg-muted);
+  opacity: 1;
+}
+
+code, kbd, samp, pre {
+  font-family: var(--font-mono);
+  font-size: 0.93em;
+}
+
+:focus { outline: none; }
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: inherit;
+}
+
+
+/* ---- Reduced motion --------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

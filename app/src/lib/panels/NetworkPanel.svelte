@@ -34,7 +34,7 @@
   const series = [
     {},
     { label: 'Read', stroke: 'var(--accent)', width: 2 },
-    { label: 'Sent', stroke: 'var(--text-medium)', width: 2 }
+    { label: 'Sent', stroke: 'var(--fg-primary)', width: 2 }
   ];
 </script>
 
@@ -57,9 +57,9 @@
 
 <style>
   .panel {
-    background: var(--sub-alt);
+    background: var(--bg-surface);
     padding: 0.875rem 1rem 1rem;
-    color: var(--text-regular);
+    color: var(--fg-primary);
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -72,12 +72,12 @@
     flex-wrap: wrap;
   }
   h3 {
-    font-weight: var(--weight-medium);
+    font-weight: 500;
     font-size: 0.8125rem;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     margin: 0;
-    color: var(--text-medium);
+    color: var(--fg-primary);
     opacity: 0.8;
   }
   .rates {
@@ -95,7 +95,7 @@
     font-size: 0.7rem;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: var(--text-regular);
+    color: var(--fg-primary);
     opacity: 0.7;
     display: inline-flex;
     align-items: center;
@@ -111,13 +111,13 @@
     background: var(--accent);
   }
   .sent .swatch {
-    background: var(--text-medium);
+    background: var(--fg-primary);
     opacity: 0.7;
   }
   dd {
     margin: 0;
-    font-weight: var(--weight-bold);
-    color: var(--text-bold);
+    font-weight: 600;
+    color: var(--fg-strong);
     font-size: 1rem;
   }
 </style>

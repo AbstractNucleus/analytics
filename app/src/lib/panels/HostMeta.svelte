@@ -83,9 +83,9 @@
 
 <style>
   .meta {
-    background: var(--sub-alt);
+    background: var(--bg-surface);
     padding: 1rem 1.125rem 1.125rem;
-    color: var(--text-regular);
+    color: var(--fg-primary);
     display: flex;
     flex-direction: column;
     gap: 0.875rem;
@@ -100,8 +100,8 @@
   h1 {
     margin: 0;
     font-size: 1.375rem;
-    font-weight: var(--weight-bold);
-    color: var(--text-bold);
+    font-weight: 600;
+    color: var(--fg-strong);
     letter-spacing: 0.02em;
     overflow-wrap: anywhere;
     min-width: 0;
@@ -110,7 +110,7 @@
     width: 0.65rem;
     height: 0.65rem;
     border-radius: 50%;
-    background: var(--text-regular);
+    background: var(--fg-primary);
     flex-shrink: 0;
   }
   .status-dot[data-status='up'] {
@@ -120,17 +120,17 @@
     background: var(--error);
   }
   .status-dot[data-status='paused'] {
-    background: var(--text-regular);
+    background: var(--fg-primary);
     opacity: 0.6;
   }
   .status-dot[data-status='pending'] {
-    background: var(--text-medium);
+    background: var(--fg-primary);
     opacity: 0.5;
   }
   .last-seen {
     margin-left: auto;
     font-size: 0.8125rem;
-    color: var(--text-regular);
+    color: var(--fg-primary);
     opacity: 0.8;
     font-variant-numeric: tabular-nums;
   }
@@ -177,14 +177,14 @@
     font-size: 0.7rem;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: var(--text-regular);
+    color: var(--fg-primary);
     opacity: 0.6;
   }
   dd {
     margin: 0;
     font-size: 0.9375rem;
-    color: var(--text-bold);
-    font-weight: var(--weight-medium);
+    color: var(--fg-strong);
+    font-weight: 500;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

@@ -34,7 +34,7 @@
     text-decoration: none;
   }
   .fleet-link:focus-visible {
-    outline: none;
-    box-shadow: var(--focus-ring);
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
 </style>

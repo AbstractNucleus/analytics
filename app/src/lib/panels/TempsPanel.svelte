@@ -31,18 +31,18 @@
 
 <style>
   .panel {
-    background: var(--sub-alt);
+    background: var(--bg-surface);
     padding: 0.75rem 1rem;
-    color: var(--text-regular);
+    color: var(--fg-primary);
   }
   header {
     margin-bottom: 0.5rem;
   }
   h3 {
-    font-weight: var(--weight-medium);
+    font-weight: 500;
     font-size: 0.875rem;
     margin: 0;
-    color: var(--text-medium);
+    color: var(--fg-primary);
   }
   dl {
     margin: 0;
@@ -56,18 +56,18 @@
   }
   dt {
     font-size: 0.875rem;
-    color: var(--text-regular);
+    color: var(--fg-primary);
   }
   dd {
     margin: 0;
-    font-weight: var(--weight-medium);
-    color: var(--text-bold);
+    font-weight: 500;
+    color: var(--fg-strong);
     text-align: right;
   }
   .empty {
     margin: 0;
     font-size: 0.875rem;
-    color: var(--text-regular);
+    color: var(--fg-primary);
     opacity: 0.6;
   }
 </style>

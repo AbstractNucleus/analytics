@@ -53,9 +53,9 @@
 
 <style>
   .panel {
-    background: var(--sub-alt);
+    background: var(--bg-surface);
     padding: 0.875rem 1rem 1rem;
-    color: var(--text-regular);
+    color: var(--fg-primary);
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -68,12 +68,12 @@
     flex-wrap: wrap;
   }
   h3 {
-    font-weight: var(--weight-medium);
+    font-weight: 500;
     font-size: 0.8125rem;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     margin: 0;
-    color: var(--text-medium);
+    color: var(--fg-primary);
     opacity: 0.8;
   }
   .meters {
@@ -83,29 +83,29 @@
     font-variant-numeric: tabular-nums;
   }
   .loadavg {
-    color: var(--text-regular);
+    color: var(--fg-primary);
     font-size: 0.8125rem;
     display: inline-flex;
     align-items: baseline;
     gap: 0.35rem;
   }
   .loadavg .k {
-    color: var(--text-regular);
+    color: var(--fg-primary);
     opacity: 0.6;
     font-size: 0.7rem;
     letter-spacing: 0.04em;
     text-transform: uppercase;
   }
   .loadavg .v {
-    color: var(--text-medium);
+    color: var(--fg-primary);
   }
   .loadavg .sep {
-    color: var(--text-regular);
+    color: var(--fg-primary);
     opacity: 0.4;
   }
   .readout {
-    font-weight: var(--weight-bold);
-    color: var(--text-bold);
+    font-weight: 600;
+    color: var(--fg-strong);
     font-variant-numeric: tabular-nums;
     font-size: 1.5rem;
     line-height: 1;

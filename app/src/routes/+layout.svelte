@@ -18,20 +18,9 @@
 </div>
 
 <style>
-  :global(body) {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text-regular);
-    font-family: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    font-weight: var(--weight-regular);
-  }
   :global(a) {
     color: var(--accent);
     text-decoration: none;
-  }
-  :global(a:focus-visible) {
-    outline: none;
-    box-shadow: var(--focus-ring);
   }
   .shell {
     min-height: 100vh;
@@ -44,12 +33,12 @@
     justify-content: space-between;
     gap: 0.75rem;
     padding: 0.75rem 1.25rem;
-    background: var(--sub-alt);
-    border-bottom: 1px solid var(--bg);
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-soft);
   }
   .brand {
-    font-weight: var(--weight-bold);
-    color: var(--text-bold);
+    font-weight: 600;
+    color: var(--fg-strong);
     letter-spacing: 0.04em;
   }
   main {
