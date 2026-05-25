@@ -115,11 +115,14 @@ function sumInterfaceRates(ni: unknown): { sent: number; recv: number } {
 }
 
 /**
- * The Beszel agent runs in Docker with `/:/hostfs:ro`, so EXTRA_FILESYSTEMS
- * must reference paths via that prefix (e.g. `/hostfs/secondary`). Strip it
- * here so the dashboard shows the host-relative path (`/secondary`).
+ * Beszel keys extra filesystems by device name (`sda1`, `nvme1n1p2`) in
+ * stats.efs — the mount path you passed to EXTRA_FILESYSTEMS is consumed by
+ * the agent for discovery but doesn't survive into the sample. Older builds
+ * keyed entries by the mount path (e.g. `/hostfs/secondary` when run via a
+ * containerised agent with /hostfs bind), so we still strip that prefix in
+ * case anyone is on the legacy shape.
  */
-function normalizeMountName(name: string): string {
+function normalizeDiskKey(name: string): string {
   if (name === '/hostfs') return '/';
   if (name.startsWith('/hostfs/')) return name.slice('/hostfs'.length);
   return name;
@@ -127,20 +130,28 @@ function normalizeMountName(name: string): string {
 
 /**
  * Map `stats.efs` (extra filesystems) into a list of DiskUsage entries. Each
- * entry is keyed by the agent's mount-point string (`/secondary`, `/data`, …)
- * and carries `{ d, du, dp }` — same shape as the root mount.
+ * entry carries `{ d, du, [dp], r, w, rb, wb }`. `dp` is absent for extras —
+ * Beszel only computes it for root — so derive it from `du / d`.
  */
 function parseExtraFilesystems(efs: unknown): DiskUsage[] {
   const map = obj(efs);
   const out: DiskUsage[] = [];
   for (const [name, value] of Object.entries(map)) {
     const entry = obj(value);
-    out.push({
-      name: normalizeMountName(name),
-      totalGb: num(entry.d),
-      usedGb: num(entry.du),
-      pct: num(entry.dp),
-    });
+    const totalGb = num(entry.d);
+    const usedGb = num(entry.du);
+    const pctRaw = num(entry.dp);
+    const pct = pctRaw > 0 ? pctRaw : totalGb > 0 ? (usedGb / totalGb) * 100 : 0;
+    const disk: DiskUsage = {
+      name: normalizeDiskKey(name),
+      totalGb,
+      usedGb,
+      pct,
+    };
+    // Per-disk I/O rates (only present when the agent exposes them).
+    if (entry.rb !== undefined) disk.readBps = num(entry.rb);
+    if (entry.wb !== undefined) disk.writeBps = num(entry.wb);
+    out.push(disk);
   }
   // Stable alphabetical order so charts and lists don't reshuffle each tick.
   out.sort((a, b) => a.name.localeCompare(b.name));

@@ -203,7 +203,7 @@ describe('parseStatsSample', () => {
     });
   });
 
-  it('parses stats.efs into additional DiskUsage entries, stripping /hostfs', () => {
+  it('parses stats.efs into additional DiskUsage entries, computing pct from du/d', () => {
     const raw = {
       system: SYSTEM_ID,
       created: '2026-04-24 17:10:00.000Z',
@@ -214,18 +214,41 @@ describe('parseStatsSample', () => {
         du: 158,
         dp: 73,
         efs: {
-          '/hostfs/secondary': { d: 916, du: 0.001, dp: 0.0 },
-          '/hostfs/data': { d: 50, du: 25, dp: 50 },
+          // Real Beszel shape: device name as key, no `dp` field, with
+          // optional rb/wb byte-rate fields.
+          sda1: { d: 916, du: 0, r: 0, w: 0, rb: 0, wb: 0 },
+          'nvme1n1p2': { d: 100, du: 50, r: 0, w: 0, rb: 1024, wb: 2048 },
         },
       },
     };
     const sample = parseStatsSample(raw);
     expect(sample.disks).toHaveLength(3);
     expect(sample.disks[0].name).toBe('/');
-    // Extras are sorted alphabetically by display name (after /hostfs strip).
-    expect(sample.disks[1].name).toBe('/data');
-    expect(sample.disks[2].name).toBe('/secondary');
-    expect(sample.disks[2].totalGb).toBe(916);
+    // Extras sort alphabetically by device name.
+    expect(sample.disks[1].name).toBe('nvme1n1p2');
+    expect(sample.disks[2].name).toBe('sda1');
+    expect(sample.disks[1].totalGb).toBe(100);
+    expect(sample.disks[1].pct).toBe(50); // computed from 50/100
+    expect(sample.disks[2].pct).toBe(0);  // computed from 0/916
+    expect(sample.disks[1].readBps).toBe(1024);
+    expect(sample.disks[1].writeBps).toBe(2048);
+  });
+
+  it('still strips a legacy /hostfs/ prefix from efs keys', () => {
+    const raw = {
+      system: SYSTEM_ID,
+      created: '2026-04-24 17:10:00.000Z',
+      type: '1m',
+      stats: {
+        cpu: 0,
+        d: 100,
+        du: 40,
+        dp: 40,
+        efs: { '/hostfs/secondary': { d: 200, du: 50, dp: 25 } },
+      },
+    };
+    const sample = parseStatsSample(raw);
+    expect(sample.disks[1].name).toBe('/secondary');
   });
 
   it('pulls per-sample disk read / write rates from stats.dr and stats.dw', () => {
