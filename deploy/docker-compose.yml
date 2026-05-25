@@ -22,26 +22,15 @@ services:
     networks:
       - internal
 
-  beszel-agent:
-    image: henrygd/beszel-agent:${BESZEL_VERSION}
-    restart: unless-stopped
-    # pid:host + network_mode:host so the agent sees real host-level process
-    # and network metrics instead of the container's namespaced view.
-    pid: host
-    network_mode: host
-    volumes:
-      - /:/hostfs:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    environment:
-      # Agent runs in network_mode: host, so localhost is bserver's loopback.
-      # The hub publishes only on ${BSERVER_LAN_IP}:8090, so reach it there.
-      HUB_URL: "http://${BSERVER_LAN_IP}:8090"
-      KEY: "${BESZEL_AGENT_KEY}"
-      # Optional: comma-separated extra filesystems to track. Paths must be
-      # reachable inside the container, so prefix host paths with /hostfs/
-      # (the bind mount above). The dashboard parser strips that prefix
-      # when displaying, so users see clean labels (e.g. "/secondary").
-      EXTRA_FILESYSTEMS: "${EXTRA_FILESYSTEMS:-}"
+  # Note: the Beszel agent does NOT run in this compose. Snap-docker on
+  # Ubuntu confines containers via AppArmor and prevents bind-mounting
+  # arbitrary host paths (only /home, /media, etc. are accessible). That
+  # means a containerised agent can only see the disk that backs its own
+  # rootfs, never a separately-mounted /secondary or /mnt/data. To get the
+  # full host view, run the agent natively via systemd — see
+  # `deploy/agent-install/linux-systemd.sh`. The same script accepts
+  # --extra-filesystems=/path[,path...] to populate stats.efs (rendered in
+  # the dashboard's per-host disk panel as additional rows).
 
   frontend:
     build:

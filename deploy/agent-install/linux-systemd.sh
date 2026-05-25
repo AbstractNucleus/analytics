@@ -40,7 +40,10 @@ BESZEL_VERSION="0.18.7"
 
 usage() {
     cat <<'EOF'
-Usage: linux-systemd.sh --hub=<HUB_URL> --key=<SSH_PUBLIC_KEY> [--token=<TOKEN>] [--help]
+Usage: linux-systemd.sh --hub=<HUB_URL> --key=<SSH_PUBLIC_KEY>
+                        [--token=<TOKEN>]
+                        [--extra-filesystems=<path[,path...]>]
+                        [--help]
 
 Installs the Beszel agent binary to /usr/local/bin/beszel-agent and registers
 a systemd unit at /etc/systemd/system/beszel-agent.service, then starts it.
@@ -63,6 +66,12 @@ Optional:
                        self-registers via WebSocket on first start, so no
                        Add-System click is needed for this host.
                        Passed as TOKEN.
+  --extra-filesystems=<path[,path...]>
+                       Comma-separated extra filesystems to track in addition
+                       to the root mount. Each path must be a real mount point
+                       on the host (use `df -h` to confirm). Reported under
+                       stats.efs and rendered as additional rows in the
+                       per-host disk panel. Passed as EXTRA_FILESYSTEMS.
 
 Other:
   -h, --help           Show this message and exit.
@@ -80,6 +89,7 @@ die() {
 HUB=""
 KEY=""
 TOKEN=""
+EXTRA_FILESYSTEMS=""
 
 if [ "$#" -eq 0 ]; then
     usage >&2
@@ -91,7 +101,9 @@ for arg in "$@"; do
         --hub=*)    HUB="${arg#--hub=}" ;;
         --key=*)    KEY="${arg#--key=}" ;;
         --token=*)  TOKEN="${arg#--token=}" ;;
-        --hub|--key|--token)
+        --extra-filesystems=*)
+                    EXTRA_FILESYSTEMS="${arg#--extra-filesystems=}" ;;
+        --hub|--key|--token|--extra-filesystems)
             die "argument '$arg' requires =VALUE (e.g. --hub=tcp://host:port)"
             ;;
         -h|--help)
@@ -123,6 +135,9 @@ case "$KEY" in
 esac
 case "$TOKEN" in
     *[$'\n\r"\\']*) die "--token contains disallowed characters (newline, quote, backslash)" ;;
+esac
+case "$EXTRA_FILESYSTEMS" in
+    *[$'\n\r"\\']*) die "--extra-filesystems contains disallowed characters (newline, quote, backslash)" ;;
 esac
 
 # ----------------------------- pre-flight checks ----------------------------
@@ -183,6 +198,7 @@ Environment="HUB_URL=${HUB}"
 EOF
     [ -n "$KEY" ]   && printf 'Environment="KEY=%s"\n' "$KEY"
     [ -n "$TOKEN" ] && printf 'Environment="TOKEN=%s"\n' "$TOKEN"
+    [ -n "$EXTRA_FILESYSTEMS" ] && printf 'Environment="EXTRA_FILESYSTEMS=%s"\n' "$EXTRA_FILESYSTEMS"
     cat <<'EOF'
 ExecStart=/usr/local/bin/beszel-agent
 Restart=always
