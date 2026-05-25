@@ -186,3 +186,65 @@ code, kbd, samp, pre {
     scroll-behavior: auto !important;
   }
 }
+
+
+/* ---- Panel chrome (DASHBOARD) ----------------------------------------- */
+/* Shared pane styling for the metric panels on the per-host page (CPU,
+   Memory, Disk, Network, Containers). Defining it once globally keeps the
+   five components in lockstep — they all consume `.panel`, with a hairline
+   border, a thin inner highlight, and a soft drop shadow that anchors the
+   pane against the page ground without competing with the metric. */
+.panel {
+  position: relative;
+  background: var(--bg-surface);
+  color: var(--fg-primary);
+  padding: 1rem 1.125rem 1.125rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.025) inset,
+    0 12px 32px -20px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.panel-title {
+  margin: 0;
+  font-weight: 500;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.panel-title::before {
+  content: '';
+  display: inline-block;
+  width: 0.25rem;
+  height: 0.25rem;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.7;
+}
+
+.panel-readout {
+  font-weight: 600;
+  color: var(--fg-strong);
+  font-variant-numeric: tabular-nums;
+  font-size: 1.625rem;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}

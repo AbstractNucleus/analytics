@@ -1,7 +1,7 @@
-<!-- Per-host view: identity strip on top, full-width CPU, a Mem/Disk pair,
-     full-width Network, then a full-width Containers table when the host is
-     reporting containers. Memory total / kernel / OS / cpu descriptor come
-     from SystemDetails; disk total comes from the latest StatsSample. -->
+<!-- Per-host view: identity hero with metric ribbon, then a grid of panels.
+     CPU runs full-width as the centerpiece chart, Memory and Disk share a row
+     below, Network closes the loop full-width, and Containers (if any) sits at
+     the bottom as a denser table. -->
 <script lang="ts">
   import HostMeta from '$lib/panels/HostMeta.svelte';
   import CpuPanel from '$lib/panels/CpuPanel.svelte';
@@ -18,60 +18,92 @@
   );
 </script>
 
-<HostMeta system={data.system} details={data.systemDetails} lastSeenMs={latest?.timestamp} />
+<div class="page">
+  <HostMeta
+    system={data.system}
+    details={data.systemDetails}
+    {latest}
+    lastSeenMs={latest?.timestamp}
+  />
 
-<div class="grid">
-  <div class="cell full">
-    <CpuPanel
-      samples={data.samples}
-      currentPct={latest?.cpuPct}
-      loadAvg={data.system.loadAvg}
-    />
-  </div>
-  <div class="cell">
-    <MemoryPanel
-      samples={data.samples}
-      currentPct={latest?.memPct}
-      memoryBytes={data.systemDetails.memoryBytes}
-    />
-  </div>
-  <div class="cell">
-    <DiskPanel
-      samples={data.samples}
-      currentPct={latest?.diskPct}
-      diskTotalGb={latest?.diskTotalGb}
-    />
-  </div>
-  <div class="cell full">
-    <NetworkPanel
-      samples={data.samples}
-      currentReadBps={latest?.netRecvBps}
-      currentSentBps={latest?.netSentBps}
-    />
-  </div>
-  {#if data.containers.length > 0}
-    <div class="cell full">
-      <ContainersPanel containers={data.containers} />
+  <div class="grid">
+    <div class="cell full" style:--cell-index={0}>
+      <CpuPanel
+        samples={data.samples}
+        currentPct={latest?.cpuPct}
+        loadAvg={data.system.loadAvg}
+      />
     </div>
-  {/if}
+    <div class="cell" style:--cell-index={1}>
+      <MemoryPanel
+        samples={data.samples}
+        currentPct={latest?.memPct}
+        memoryBytes={data.systemDetails.memoryBytes}
+      />
+    </div>
+    <div class="cell" style:--cell-index={2}>
+      <DiskPanel
+        samples={data.samples}
+        currentPct={latest?.diskPct}
+        diskTotalGb={latest?.diskTotalGb}
+      />
+    </div>
+    <div class="cell full" style:--cell-index={3}>
+      <NetworkPanel
+        samples={data.samples}
+        currentReadBps={latest?.netRecvBps}
+        currentSentBps={latest?.netSentBps}
+      />
+    </div>
+    {#if data.containers.length > 0}
+      <div class="cell full" style:--cell-index={4}>
+        <ContainersPanel containers={data.containers} />
+      </div>
+    {/if}
+  </div>
 </div>
 
 <style>
+  .page {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
   .grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.75rem;
-    margin-top: 0.75rem;
+    gap: 1rem;
   }
   .cell {
     min-width: 0;
+    animation: cell-enter 360ms cubic-bezier(0.4, 0, 0.2, 1) backwards;
+    animation-delay: calc(var(--cell-index, 0) * 60ms + 80ms);
   }
   .cell.full {
     grid-column: 1 / -1;
   }
+
+  @keyframes cell-enter {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cell {
+      animation: none;
+    }
+  }
+
   @media (max-width: 900px) {
     .grid {
       grid-template-columns: 1fr;
+      gap: 0.75rem;
     }
     .cell.full {
       grid-column: auto;

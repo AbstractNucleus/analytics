@@ -28,18 +28,18 @@
 
   const series = [
     {},
-    { label: 'Memory', stroke: 'var(--accent)', fill: 'rgba(194, 65, 12, 0.18)', width: 2 }
+    { label: 'Memory', stroke: 'var(--accent)', fill: 'var(--accent-soft)', width: 2 }
   ];
 </script>
 
 <section class="panel" aria-label="Memory">
-  <header>
-    <h3>Memory</h3>
-    <span class="readout">{formatPercent(pct, 1)}</span>
+  <header class="panel-header">
+    <h3 class="panel-title">Memory</h3>
+    <span class="panel-readout">{formatPercent(pct, 1)}</span>
   </header>
   <p class="sub">
-    <span class="used">{formatTabular(used, { decimals: 1, suffix: 'GB' })}</span>
-    <span class="sep"> / </span>
+    <span class="used">{formatTabular(used, { decimals: 1 })}</span>
+    <span class="sep">/</span>
     <span class="total">{formatTabular(totalGb, { decimals: 0, suffix: 'GB' })}</span>
   </p>
   {#if hasChart}
@@ -48,43 +48,17 @@
 </section>
 
 <style>
-  .panel {
-    background: var(--bg-surface);
-    padding: 0.875rem 1rem 1rem;
-    color: var(--fg-primary);
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  header {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-  }
-  h3 {
-    font-weight: 500;
-    font-size: 0.8125rem;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    margin: 0;
-    color: var(--fg-primary);
-    opacity: 0.8;
-  }
-  .readout {
-    font-weight: 600;
-    color: var(--fg-strong);
-    font-variant-numeric: tabular-nums;
-    font-size: 1.375rem;
-    line-height: 1;
-  }
   .sub {
     margin: 0;
-    color: var(--fg-primary);
+    color: var(--fg-muted);
     font-variant-numeric: tabular-nums;
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
+  }
+  .used {
+    color: var(--fg-primary);
   }
   .sep {
-    color: var(--fg-primary);
+    margin: 0 0.2rem;
     opacity: 0.5;
   }
 </style>

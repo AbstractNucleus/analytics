@@ -33,14 +33,14 @@
 
   const series = [
     {},
-    { label: 'Read', stroke: 'var(--accent)', width: 2 },
-    { label: 'Sent', stroke: 'var(--fg-primary)', width: 2 }
+    { label: 'Read', stroke: 'var(--accent)', fill: 'var(--accent-soft)', width: 2 },
+    { label: 'Sent', stroke: 'var(--fg-primary)', width: 1.5 }
   ];
 </script>
 
 <section class="panel" aria-label="Network">
-  <header>
-    <h3>Network</h3>
+  <header class="panel-header">
+    <h3 class="panel-title">Network</h3>
     <dl class="rates">
       <div class="rate read">
         <dt><span class="swatch" aria-hidden="true"></span>Read</dt>
@@ -56,30 +56,6 @@
 </section>
 
 <style>
-  .panel {
-    background: var(--bg-surface);
-    padding: 0.875rem 1rem 1rem;
-    color: var(--fg-primary);
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  header {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 1rem;
-    flex-wrap: wrap;
-  }
-  h3 {
-    font-weight: 500;
-    font-size: 0.8125rem;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    margin: 0;
-    color: var(--fg-primary);
-    opacity: 0.8;
-  }
   .rates {
     display: flex;
     gap: 1.5rem;
@@ -92,32 +68,33 @@
     gap: 0.15rem;
   }
   dt {
-    font-size: 0.7rem;
-    letter-spacing: 0.04em;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--fg-primary);
-    opacity: 0.7;
+    color: var(--fg-muted);
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
   }
   .swatch {
-    width: 0.55rem;
-    height: 0.55rem;
-    border-radius: 50%;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 1px;
     display: inline-block;
   }
   .read .swatch {
     background: var(--accent);
+    box-shadow: 0 0 6px 0 color-mix(in srgb, var(--accent) 60%, transparent);
   }
   .sent .swatch {
     background: var(--fg-primary);
-    opacity: 0.7;
+    opacity: 0.65;
   }
   dd {
     margin: 0;
     font-weight: 600;
     color: var(--fg-strong);
-    font-size: 1rem;
+    font-size: 1.0625rem;
+    font-variant-numeric: tabular-nums;
   }
 </style>

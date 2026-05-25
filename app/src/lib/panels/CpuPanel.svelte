@@ -25,15 +25,15 @@
 
   const series = [
     {},
-    { label: 'CPU', stroke: 'var(--accent)', fill: 'rgba(194, 65, 12, 0.14)', width: 2 }
+    { label: 'CPU', stroke: 'var(--accent)', fill: 'var(--accent-soft)', width: 2 }
   ];
 
   const fmtLoad = (v: number) => formatTabular(v, { decimals: 2 });
 </script>
 
 <section class="panel" aria-label="CPU">
-  <header>
-    <h3>CPU</h3>
+  <header class="panel-header">
+    <h3 class="panel-title">CPU</h3>
     <div class="meters">
       {#if loadAvg}
         <span class="loadavg" title="Load average 1m / 5m / 15m">
@@ -45,37 +45,13 @@
           <span class="v">{fmtLoad(loadAvg[2])}</span>
         </span>
       {/if}
-      <span class="readout">{formatPercent(current, 1)}</span>
+      <span class="panel-readout">{formatPercent(current, 1)}</span>
     </div>
   </header>
-  <TimeSeries {data} {series} {height} formatY={(v) => formatPercent(v, 0)} />
+  <TimeSeries {data} {series} {height} yRange={[0, 100]} formatY={(v) => formatPercent(v, 0)} />
 </section>
 
 <style>
-  .panel {
-    background: var(--bg-surface);
-    padding: 0.875rem 1rem 1rem;
-    color: var(--fg-primary);
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  header {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 1rem;
-    flex-wrap: wrap;
-  }
-  h3 {
-    font-weight: 500;
-    font-size: 0.8125rem;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    margin: 0;
-    color: var(--fg-primary);
-    opacity: 0.8;
-  }
   .meters {
     display: flex;
     align-items: baseline;
@@ -90,24 +66,16 @@
     gap: 0.35rem;
   }
   .loadavg .k {
-    color: var(--fg-primary);
-    opacity: 0.6;
-    font-size: 0.7rem;
-    letter-spacing: 0.04em;
+    color: var(--fg-muted);
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
   }
   .loadavg .v {
     color: var(--fg-primary);
   }
   .loadavg .sep {
-    color: var(--fg-primary);
-    opacity: 0.4;
-  }
-  .readout {
-    font-weight: 600;
-    color: var(--fg-strong);
-    font-variant-numeric: tabular-nums;
-    font-size: 1.5rem;
-    line-height: 1;
+    color: var(--fg-muted);
+    opacity: 0.5;
   }
 </style>
