@@ -44,8 +44,7 @@
     <div class="cell" style:--cell-index={2}>
       <DiskPanel
         samples={data.samples}
-        currentPct={latest?.diskPct}
-        diskTotalGb={latest?.diskTotalGb}
+        {latest}
       />
     </div>
     <div class="cell full" style:--cell-index={3}>

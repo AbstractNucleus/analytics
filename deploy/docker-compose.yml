@@ -37,6 +37,11 @@ services:
       # The hub publishes only on ${BSERVER_LAN_IP}:8090, so reach it there.
       HUB_URL: "http://${BSERVER_LAN_IP}:8090"
       KEY: "${BESZEL_AGENT_KEY}"
+      # Optional: comma-separated extra filesystems to track. Paths must be
+      # reachable inside the container, so prefix host paths with /hostfs/
+      # (the bind mount above). The dashboard parser strips that prefix
+      # when displaying, so users see clean labels (e.g. "/secondary").
+      EXTRA_FILESYSTEMS: "${EXTRA_FILESYSTEMS:-}"
 
   frontend:
     build:

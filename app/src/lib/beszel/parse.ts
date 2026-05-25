@@ -2,6 +2,7 @@ import type {
   ContainerRow,
   ContainerStatsEntry,
   ContainerStatsSample,
+  DiskUsage,
   StatsSample,
   SystemDetails,
   SystemRow,
@@ -113,12 +114,66 @@ function sumInterfaceRates(ni: unknown): { sent: number; recv: number } {
   return { sent, recv };
 }
 
+/**
+ * The Beszel agent runs in Docker with `/:/hostfs:ro`, so EXTRA_FILESYSTEMS
+ * must reference paths via that prefix (e.g. `/hostfs/secondary`). Strip it
+ * here so the dashboard shows the host-relative path (`/secondary`).
+ */
+function normalizeMountName(name: string): string {
+  if (name === '/hostfs') return '/';
+  if (name.startsWith('/hostfs/')) return name.slice('/hostfs'.length);
+  return name;
+}
+
+/**
+ * Map `stats.efs` (extra filesystems) into a list of DiskUsage entries. Each
+ * entry is keyed by the agent's mount-point string (`/secondary`, `/data`, …)
+ * and carries `{ d, du, dp }` — same shape as the root mount.
+ */
+function parseExtraFilesystems(efs: unknown): DiskUsage[] {
+  const map = obj(efs);
+  const out: DiskUsage[] = [];
+  for (const [name, value] of Object.entries(map)) {
+    const entry = obj(value);
+    out.push({
+      name: normalizeMountName(name),
+      totalGb: num(entry.d),
+      usedGb: num(entry.du),
+      pct: num(entry.dp),
+    });
+  }
+  // Stable alphabetical order so charts and lists don't reshuffle each tick.
+  out.sort((a, b) => a.name.localeCompare(b.name));
+  return out;
+}
+
 export function parseStatsSample(raw: unknown): StatsSample {
   const r = obj(raw);
   const stats = obj(r.stats);
   const b = arr(stats.b);
   const haveB = b.length >= 2;
   const { sent: sentFromNi, recv: recvFromNi } = sumInterfaceRates(stats.ni);
+
+  const rootPct = num(stats.dp);
+  const rootTotal = num(stats.d);
+  const rootUsed = num(stats.du);
+  const diskReadBps = num(stats.dr);
+  const diskWriteBps = num(stats.dw);
+
+  const rootDisk: DiskUsage = {
+    name: '/',
+    totalGb: rootTotal,
+    usedGb: rootUsed,
+    pct: rootPct,
+  };
+  if (diskReadBps > 0 || stats.dr !== undefined) rootDisk.readBps = diskReadBps;
+  if (diskWriteBps > 0 || stats.dw !== undefined) rootDisk.writeBps = diskWriteBps;
+
+  const extras = parseExtraFilesystems(stats.efs);
+  // Root only counts if Beszel reported a non-zero total — for Windows / odd
+  // mounts where Beszel reports d=0 we'd rather not show a "/" placeholder.
+  const disks = rootTotal > 0 ? [rootDisk, ...extras] : extras.length > 0 ? extras : [rootDisk];
+
   return {
     systemId: str(r.system),
     timestamp: toMs(r.created),
@@ -127,9 +182,12 @@ export function parseStatsSample(raw: unknown): StatsSample {
     memPct: num(stats.mp),
     memTotalGb: num(stats.m),
     memUsedGb: num(stats.mu),
-    diskPct: num(stats.dp),
-    diskTotalGb: num(stats.d),
-    diskUsedGb: num(stats.du),
+    diskPct: rootPct,
+    diskTotalGb: rootTotal,
+    diskUsedGb: rootUsed,
+    disks,
+    diskReadBps,
+    diskWriteBps,
     loadAvg: loadAvg(stats.la),
     netSentBps: haveB ? num(b[0]) : sentFromNi,
     netRecvBps: haveB ? num(b[1]) : recvFromNi,

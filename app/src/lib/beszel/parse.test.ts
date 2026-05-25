@@ -186,6 +186,60 @@ describe('parseStatsSample', () => {
     expect(sample.netRecvBps).toBe(27);
   });
 
+  it('exposes a `disks` array with the root mount as the first entry', () => {
+    const raw = {
+      system: SYSTEM_ID,
+      created: '2026-04-24 17:10:00.000Z',
+      type: '1m',
+      stats: { cpu: 0, d: 100, du: 40, dp: 40 },
+    };
+    const sample = parseStatsSample(raw);
+    expect(sample.disks).toHaveLength(1);
+    expect(sample.disks[0]).toEqual({
+      name: '/',
+      totalGb: 100,
+      usedGb: 40,
+      pct: 40,
+    });
+  });
+
+  it('parses stats.efs into additional DiskUsage entries, stripping /hostfs', () => {
+    const raw = {
+      system: SYSTEM_ID,
+      created: '2026-04-24 17:10:00.000Z',
+      type: '1m',
+      stats: {
+        cpu: 0,
+        d: 229,
+        du: 158,
+        dp: 73,
+        efs: {
+          '/hostfs/secondary': { d: 916, du: 0.001, dp: 0.0 },
+          '/hostfs/data': { d: 50, du: 25, dp: 50 },
+        },
+      },
+    };
+    const sample = parseStatsSample(raw);
+    expect(sample.disks).toHaveLength(3);
+    expect(sample.disks[0].name).toBe('/');
+    // Extras are sorted alphabetically by display name (after /hostfs strip).
+    expect(sample.disks[1].name).toBe('/data');
+    expect(sample.disks[2].name).toBe('/secondary');
+    expect(sample.disks[2].totalGb).toBe(916);
+  });
+
+  it('pulls per-sample disk read / write rates from stats.dr and stats.dw', () => {
+    const raw = {
+      system: SYSTEM_ID,
+      created: '2026-04-24 17:10:00.000Z',
+      type: '1m',
+      stats: { cpu: 0, d: 100, du: 40, dp: 40, dr: 1024, dw: 2048 },
+    };
+    const sample = parseStatsSample(raw);
+    expect(sample.diskReadBps).toBe(1024);
+    expect(sample.diskWriteBps).toBe(2048);
+  });
+
   it('parses a realtime event record shape identically to list results', () => {
     const record = realtimeEventFixture.record as Record<string, unknown>;
     const stats = record.stats as Record<string, unknown>;

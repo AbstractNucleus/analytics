@@ -64,6 +64,25 @@ export interface SystemDetails {
   podman: boolean;
 }
 
+/**
+ * One filesystem in a {@link StatsSample}. The first entry of `disks` is the
+ * root mount (synthesised from the legacy `stats.d / .du / .dp` triple); the
+ * rest come from `stats.efs` (extra filesystems — only populated when the
+ * agent is configured with `EXTRA_FILESYSTEMS=/path[,…]`).
+ */
+export interface DiskUsage {
+  /** Mount point or display label, e.g. `"/"` or `"/secondary"`. */
+  name: string;
+  totalGb: number;
+  usedGb: number;
+  /** Percentage used, 0..100. */
+  pct: number;
+  /** Bytes/sec read rate, if the agent reports per-disk I/O. Otherwise undefined. */
+  readBps?: number;
+  /** Bytes/sec write rate, if the agent reports per-disk I/O. Otherwise undefined. */
+  writeBps?: number;
+}
+
 export interface StatsSample {
   systemId: string;
   timestamp: number;
@@ -73,9 +92,23 @@ export interface StatsSample {
   memPct: number;
   memTotalGb: number;
   memUsedGb: number;
+  /**
+   * Root mount usage % — same as `disks[0].pct`. Kept flat for back-compat with
+   * components that only need a single headline disk metric (e.g. the host
+   * hero ribbon). New code should prefer iterating `disks`.
+   */
   diskPct: number;
   diskTotalGb: number;
   diskUsedGb: number;
+  /**
+   * All reported filesystems. `disks[0]` is the root mount; subsequent entries
+   * are extras from `stats.efs`. Always at least length 1 (the root).
+   */
+  disks: DiskUsage[];
+  /** Bytes/sec read rate on the root disk (`stats.dr`), if reported. */
+  diskReadBps: number;
+  /** Bytes/sec write rate on the root disk (`stats.dw`), if reported. */
+  diskWriteBps: number;
   loadAvg: [number, number, number];
   /**
    * Aggregate send-bytes-per-second across all interfaces. Sourced from

@@ -2,6 +2,7 @@ export type {
   ContainerRow,
   ContainerStatsEntry,
   ContainerStatsSample,
+  DiskUsage,
   HostSlug,
   StatsSample,
   SystemDetails,
