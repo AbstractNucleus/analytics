@@ -68,6 +68,7 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    container-type: inline-size;
   }
   .grid {
     display: grid;
@@ -81,6 +82,18 @@
   }
   .cell.full {
     grid-column: 1 / -1;
+  }
+
+  /* Container query: when the main pane is too narrow for two columns,
+     stack. Viewport-based breakpoints don't work here because the sidebar
+     pinches the main pane on its own. */
+  @container (max-width: 720px) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
+    .cell.full {
+      grid-column: auto;
+    }
   }
 
   @keyframes cell-enter {
@@ -100,13 +113,9 @@
     }
   }
 
-  @media (max-width: 900px) {
+  @container (max-width: 720px) {
     .grid {
-      grid-template-columns: 1fr;
       gap: 0.75rem;
-    }
-    .cell.full {
-      grid-column: auto;
     }
   }
 </style>

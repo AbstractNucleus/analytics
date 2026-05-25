@@ -23,17 +23,20 @@
 
 /* ---- Primitives (raw scale — do not consume from components) ----------- */
 :root {
-  /* Ink ramp — neutral dark grounds. */
-  --hex-void:           #0e0e0e;   /* page bg, deepest */
-  --hex-graphite:       #161616;   /* panel surface (resting) */
-  --hex-graphite-lift:  #1d1d1d;   /* panel surface (hover / focus within) */
-  --hex-ash:            #232323;   /* inline elements: inputs, kbd, code chips */
-  --hex-iron:           #2a2a2a;   /* dividers, strong border fallback */
+  /* Ink ramp — warm cocoa-tinted darks, matching the Claude Code desktop
+     app's window. Each step is a touch lighter and a touch warmer than the
+     last. Not neutral grays: every level is +1°/+1° warmer than the pure
+     #1a1a1a line to keep the room cocoa, not graphite. */
+  --hex-void:           #15120f;   /* page bg, deepest (sidebar / app frame) */
+  --hex-graphite:       #1d1916;   /* panel surface (resting) */
+  --hex-graphite-lift:  #26211d;   /* panel surface (hover / focus within) */
+  --hex-ash:            #2f2925;   /* inline elements: inputs, kbd, code chips */
+  --hex-iron:           #3a322d;   /* dividers, strong border fallback */
 
-  /* Paper ramp — text on ink */
-  --hex-paper-bright: #f5f5f5;     /* DASHBOARD: metric values, headlines */
-  --hex-paper:        #ededed;     /* body text */
-  --hex-fog:          #8a8a8a;     /* muted text */
+  /* Paper ramp — warm cream tones for text on the cocoa ground. */
+  --hex-paper-bright: #ece2d4;     /* DASHBOARD: metric values, headlines */
+  --hex-paper:        #c8bcab;     /* body text */
+  --hex-fog:          #8a7e6e;     /* muted text */
 
   /* Terracotta — the brand accent. Same hex as the Claude asterisk. */
   --hex-clay:       #d97757;
@@ -47,12 +50,13 @@
      as IDE chrome alongside the terracotta + amber, not as warning
      signage. Red is clearly red (not orange) so it can't be confused
      with the accent. */
-  --hex-moss:  #6e9d5b;
-  --hex-rust:  #c75450;
+  --hex-moss:  #7ba556;
+  --hex-rust:  #cc5a51;
 
-  /* Translucent border values. */
-  --hex-border:         rgba(255, 255, 255, 0.06);
-  --hex-border-strong:  rgba(255, 255, 255, 0.12);
+  /* Translucent border values — tinted with warm cream so they read with
+     the cocoa ground rather than the cool blue you get from rgba white. */
+  --hex-border:         rgba(236, 226, 212, 0.06);
+  --hex-border-strong:  rgba(236, 226, 212, 0.12);
 }
 
 
@@ -88,8 +92,8 @@
   /* DASHBOARD: chart axis + grid. uPlot draws these into a canvas with no
      CSS access, so they must be concrete color strings — never var()
      chains that getComputedStyle can't unwrap to a literal. */
-  --chart-axis: #8a8a8a;
-  --chart-grid: rgba(255, 255, 255, 0.06);
+  --chart-axis: #8a7e6e;
+  --chart-grid: rgba(236, 226, 212, 0.06);
 
   /* Focus ring — accent on the neutral ground. */
   --ring: var(--accent);
