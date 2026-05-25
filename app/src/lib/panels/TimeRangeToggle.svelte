@@ -1,12 +1,38 @@
-<!-- Four-button segmented toggle for the layout-level TimeRange store. The
-     active option is highlighted with a sliding pill background that animates
-     between positions. -->
+<!-- Four-button segmented toggle bound to the `?range=` URL search param. The
+     URL is the source of truth so per-host SSR loads can read it and refetch
+     with the matching window. Clicking updates the URL via goto() with
+     replaceState so toggle history doesn't pollute the back stack. -->
 <script lang="ts">
-  import { range, setRange, type TimeRange } from './timeRangeStore';
+  import { page } from '$app/state';
+  import { goto } from '$app/navigation';
+
+  type TimeRange = '1h' | '24h' | '7d' | '30d';
 
   const OPTIONS: TimeRange[] = ['1h', '24h', '7d', '30d'];
+  const DEFAULT: TimeRange = '24h';
 
-  const activeIndex = $derived(OPTIONS.indexOf($range));
+  // Active range derives from the URL, with a safe default. `page.url` is a
+  // reactive proxy in Svelte 5 so this re-runs on every navigation.
+  const activeRange = $derived.by<TimeRange>(() => {
+    const raw = page.url?.searchParams.get('range');
+    return raw && (OPTIONS as string[]).includes(raw) ? (raw as TimeRange) : DEFAULT;
+  });
+  const activeIndex = $derived(OPTIONS.indexOf(activeRange));
+
+  async function pick(option: TimeRange) {
+    if (option === activeRange) return;
+    const target = new URL(page.url);
+    if (option === DEFAULT) {
+      target.searchParams.delete('range');
+    } else {
+      target.searchParams.set('range', option);
+    }
+    await goto(target.pathname + target.search, {
+      replaceState: true,
+      keepFocus: true,
+      noScroll: true,
+    });
+  }
 </script>
 
 <div class="toggle" role="group" aria-label="Time range">
@@ -19,9 +45,9 @@
   {#each OPTIONS as option (option)}
     <button
       type="button"
-      aria-pressed={$range === option}
-      class:active={$range === option}
-      onclick={() => setRange(option)}
+      aria-pressed={activeRange === option}
+      class:active={activeRange === option}
+      onclick={() => pick(option)}
     >
       {option}
     </button>

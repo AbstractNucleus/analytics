@@ -1,13 +1,24 @@
-import { describe, expect, it, beforeEach } from 'vitest';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
-import { get } from 'svelte/store';
+
+// vi.mock() is hoisted above imports, so any factory it uses must come from
+// vi.hoisted() to avoid referencing variables before they exist.
+const { pageMock, gotoSpy } = vi.hoisted(() => {
+  const pageMock = { url: new URL('http://localhost/hosts/foo') };
+  const gotoSpy = vi.fn(async (target: string) => {
+    pageMock.url = new URL(target, pageMock.url);
+  });
+  return { pageMock, gotoSpy };
+});
+vi.mock('$app/state', () => ({ page: pageMock }));
+vi.mock('$app/navigation', () => ({ goto: gotoSpy }));
 
 import TimeRangeToggle from './TimeRangeToggle.svelte';
-import { range, setRange } from './timeRangeStore';
 
 describe('TimeRangeToggle', () => {
   beforeEach(() => {
-    setRange('24h');
+    pageMock.url = new URL('http://localhost/hosts/foo');
+    gotoSpy.mockClear();
   });
 
   it('renders four buttons for each allowed range', () => {
@@ -17,19 +28,38 @@ describe('TimeRangeToggle', () => {
     }
   });
 
-  it("marks the active button with aria-pressed='true' to match $range", () => {
+  it('marks the default 24h button active when no ?range is set', () => {
     render(TimeRangeToggle);
-    const active = screen.getByRole('button', { name: '24h' });
-    expect(active.getAttribute('aria-pressed')).toBe('true');
-
-    const inactive = screen.getByRole('button', { name: '7d' });
-    expect(inactive.getAttribute('aria-pressed')).toBe('false');
+    expect(screen.getByRole('button', { name: '24h' }).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByRole('button', { name: '7d' }).getAttribute('aria-pressed')).toBe('false');
   });
 
-  it('clicking a button calls setRange and updates the store', async () => {
+  it('reads the active range from the URL', () => {
+    pageMock.url = new URL('http://localhost/hosts/foo?range=7d');
     render(TimeRangeToggle);
-    const btn = screen.getByRole('button', { name: '7d' });
-    await fireEvent.click(btn);
-    expect(get(range)).toBe('7d');
+    expect(screen.getByRole('button', { name: '7d' }).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByRole('button', { name: '24h' }).getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('clicking a non-default range navigates to the same path with ?range=', async () => {
+    render(TimeRangeToggle);
+    await fireEvent.click(screen.getByRole('button', { name: '7d' }));
+    expect(gotoSpy).toHaveBeenCalledTimes(1);
+    expect(gotoSpy.mock.calls[0][0]).toBe('/hosts/foo?range=7d');
+  });
+
+  it('clicking the default 24h range removes ?range= from the URL', async () => {
+    pageMock.url = new URL('http://localhost/hosts/foo?range=7d');
+    render(TimeRangeToggle);
+    await fireEvent.click(screen.getByRole('button', { name: '24h' }));
+    expect(gotoSpy).toHaveBeenCalledTimes(1);
+    expect(gotoSpy.mock.calls[0][0]).toBe('/hosts/foo');
+  });
+
+  it('clicking the already-active range is a no-op', async () => {
+    pageMock.url = new URL('http://localhost/hosts/foo?range=7d');
+    render(TimeRangeToggle);
+    await fireEvent.click(screen.getByRole('button', { name: '7d' }));
+    expect(gotoSpy).not.toHaveBeenCalled();
   });
 });

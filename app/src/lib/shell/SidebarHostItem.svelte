@@ -1,7 +1,11 @@
 <!-- One row in the sidebar host list. Active highlight is driven by the
      `active` prop so the parent can compute it from the current URL and we
-     don't have to plumb $app/state into the row component. -->
+     don't have to plumb $app/state into the row component.
+
+     The link preserves the current `?range=` search param so the user's
+     time-range selection survives navigating between hosts. -->
 <script lang="ts">
+  import { page } from '$app/state';
   import { formatPercent } from '$lib/format';
   import type { SystemRow } from '$lib/beszel';
 
@@ -21,6 +25,11 @@
     Number.isFinite(cpu) ? Math.max(0, Math.min(100, cpu)) : 0,
   );
   const hot = $derived(Number.isFinite(cpu) && cpu >= 85);
+
+  const href = $derived.by(() => {
+    const range = page.url?.searchParams.get('range');
+    return range ? `/hosts/${system.slug}?range=${range}` : `/hosts/${system.slug}`;
+  });
 </script>
 
 <a
@@ -28,7 +37,7 @@
   class:active
   class:hot
   data-status={system.status}
-  href="/hosts/{system.slug}"
+  {href}
 >
   <span class="rail" aria-hidden="true"></span>
   <span class="pip" data-status={system.status} aria-label={system.status}></span>

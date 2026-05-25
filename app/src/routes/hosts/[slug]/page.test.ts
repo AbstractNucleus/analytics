@@ -42,6 +42,7 @@ describe('per-host view (hosts/[slug]/+page.svelte)', () => {
           containers: CONTAINERS,
           beszelUrl: undefined,
           systems: [],
+          range: '24h',
         },
       },
     });
@@ -67,6 +68,7 @@ describe('per-host view (hosts/[slug]/+page.svelte)', () => {
           containers: CONTAINERS,
           beszelUrl: undefined,
           systems: [],
+          range: '24h',
         },
       },
     });
