@@ -1,0 +1,70 @@
+# Server-side stack for analytics. Lives at /home/abstract/deploy/analytics/ on
+# bserver, next to a .env. There is deliberately no `build:` key here: the
+# server has no source tree and must never try to compile anything.
+#
+# ../docker-compose.yml still builds, and is what you use locally. The two
+# files describe the same stack two ways — change a port or add a service in
+# one and you must mirror it in the other.
+#
+# Deploy:  docker compose pull && docker compose up -d --wait
+# Rollback: set TAG to an older sha-xxxxxxx in .env, then the same two commands.
+
+# The live stack was started with `-p deploy`, so its containers, network and
+# volume are named deploy-*, deploy_internal and deploy_hub-data. Pinning the
+# name here makes this file replace those containers in place. Without it
+# Compose would derive the project name from the directory
+# (/home/abstract/deploy/analytics -> "analytics"), stand up a SECOND stack
+# that collides on ports 3001/8090, and — worse — create an empty
+# analytics_hub-data volume, orphaning every system, token and metric Beszel
+# has recorded.
+name: deploy
+
+services:
+  beszel-hub:
+    image: henrygd/beszel:${BESZEL_VERSION}
+    restart: unless-stopped
+    # Published on:
+    #  - ${BSERVER_LAN_IP}:8090 so aserver's nginx can reach /_/ and /api/
+    #    over the LAN for the public analytics.<your-domain> URL.
+    #  - ${BSERVER_TS_IP}:8090  so any tailnet client can reach Beszel's
+    #    bundled admin UI directly (the only place to add new systems —
+    #    the custom SvelteKit dashboard doesn't include that form).
+    # On bserver both variables hold the same address, so Docker publishes a
+    # single binding. Keep both lines: the .env is what decides.
+    ports:
+      - "${BSERVER_LAN_IP:?BSERVER_LAN_IP must be set in .env}:8090:8090"
+      - "${BSERVER_TS_IP:?BSERVER_TS_IP must be set in .env}:8090:8090"
+    volumes:
+      # Named volume, not a bind mount — nothing here depends on a source tree
+      # being present. Resolves to deploy_hub-data because of `name:` above.
+      - hub-data:/beszel_data
+    networks:
+      - internal
+
+  # Note: the Beszel agent does NOT run in this compose. Snap-docker on
+  # Ubuntu confines containers via AppArmor and prevents bind-mounting
+  # arbitrary host paths (only /home, /media, etc. are accessible). That
+  # means a containerised agent can only see the disk that backs its own
+  # rootfs, never a separately-mounted /secondary or /mnt/data. To get the
+  # full host view, run the agent natively via systemd — see
+  # `deploy/agent-install/linux-systemd.sh`.
+
+  frontend:
+    image: ghcr.io/abstractnucleus/analytics:${TAG:-latest}
+    restart: unless-stopped
+    ports:
+      - "${BSERVER_LAN_IP:?BSERVER_LAN_IP must be set in .env}:${ANALYTICS_HOST_PORT:?ANALYTICS_HOST_PORT must be set in .env}:3000"
+    environment:
+      CI: "true"
+      PUBLIC_BESZEL_URL: "${PUBLIC_BESZEL_URL}"
+      BESZEL_API_TOKEN: "${BESZEL_API_TOKEN}"
+    networks:
+      - internal
+    depends_on:
+      - beszel-hub
+
+networks:
+  internal:
+
+volumes:
+  hub-data:

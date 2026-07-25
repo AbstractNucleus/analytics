@@ -1,4 +1,7 @@
 node_modules
+# A project-local pnpm store appears if anyone runs pnpm with --store-dir here
+# (bserver's checkout has one). It is hundreds of MB of build context.
+.pnpm-store
 .svelte-kit
 build
 tests
